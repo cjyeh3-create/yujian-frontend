@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import EditableField from "./EditableField";
 
 // WooCommerce compatible product interface
 export interface WooCommerceProduct {
@@ -27,9 +28,10 @@ export interface WooCommerceProduct {
 interface ProductCardProps {
   product: WooCommerceProduct;
   onOpenDetails?: (product: WooCommerceProduct) => void;
+  onUpdateProduct?: (id: number, updatedFields: Partial<WooCommerceProduct>) => void;
 }
 
-export default function ProductCard({ product, onOpenDetails }: ProductCardProps) {
+export default function ProductCard({ product, onOpenDetails, onUpdateProduct }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
 
   const mainImage = product.images[0]?.src || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80";
@@ -77,12 +79,25 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
           <div className="flex-1 min-w-0">
             {/* Categories */}
             <div className="text-[10px] text-[#8B5E3C] font-extrabold tracking-wider uppercase mb-1 line-clamp-1">
-              {product.categories[0]?.name || "智慧工具"}
+              <EditableField
+                value={product.categories[0]?.name || "智慧工具"}
+                onSave={(newCatName) =>
+                  onUpdateProduct &&
+                  onUpdateProduct(product.id, {
+                    categories: [{ id: product.categories[0]?.id || 1, name: newCatName }],
+                  })
+                }
+              />
             </div>
             {/* Title */}
-            <h3 className="text-[#2C221E] font-extrabold text-sm leading-snug group-hover:text-[#8B5E3C] transition-colors duration-200 truncate">
-              {product.name}
-            </h3>
+            <EditableField
+              as="h3"
+              value={product.name}
+              className="text-[#2C221E] font-extrabold text-sm leading-snug group-hover:text-[#8B5E3C] transition-colors duration-200 truncate block"
+              onSave={(newName) =>
+                onUpdateProduct && onUpdateProduct(product.id, { name: newName })
+              }
+            />
             {/* Meta: Rating & Downloads */}
             <div className="flex items-center gap-2 mt-1.5 text-[11px] text-[#6A5A53]">
               <span className="flex items-center text-amber-500 gap-0.5">
@@ -98,11 +113,20 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
         </div>
 
         {/* Short Description */}
-        <p className="text-xs text-[#6A5A53] leading-relaxed line-clamp-2 mb-4 group-hover:text-[#4A3D36] transition-colors">
-          {product.short_description
-            ? product.short_description.replace(/<[^>]*>/g, "")
-            : "為智慧漁業開發的專業雲端運算與數據視覺化應用，完美整合硬體數據與雲端分析。"}
-        </p>
+        <div className="mb-4">
+          <EditableField
+            as="p"
+            value={
+              product.short_description
+                ? product.short_description.replace(/<[^>]*>/g, "")
+                : "為智慧漁業開發的專業雲端運算與數據視覺化應用，完美整合硬體數據與雲端分析。"
+            }
+            className="text-xs text-[#6A5A53] leading-relaxed line-clamp-2 block"
+            onSave={(newDesc) =>
+              onUpdateProduct && onUpdateProduct(product.id, { short_description: newDesc })
+            }
+          />
+        </div>
 
         {/* Platforms & Version */}
         <div className="flex items-center justify-between border-t border-[#FAF6F0] pt-3.5 mb-4 text-[10px] text-[#8A7A72]">
@@ -122,14 +146,31 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
 
       {/* Bottom: Price and Download/Add Actions */}
       <div className="flex items-center justify-between border-t border-[#FAF6F0] pt-3.5">
-        {/* Price */}
+        {/* Price (Editable) */}
         <div className="flex flex-col">
           {isFree ? (
-            <span className="text-[#52796F] font-extrabold text-sm tracking-wide">免費取得</span>
+            <span className="text-[#52796F] font-extrabold text-sm tracking-wide">
+              <EditableField
+                value="免費取得"
+                onSave={(newPriceVal) => {
+                  const val = newPriceVal.replace("NT$", "").replace(/,/g, "").trim();
+                  const parsed = parseFloat(val);
+                  const updatedPrice = isNaN(parsed) || val === "免費取得" || val === "" ? "0" : String(parsed);
+                  onUpdateProduct && onUpdateProduct(product.id, { price: updatedPrice });
+                }}
+              />
+            </span>
           ) : onSale ? (
             <div className="flex flex-col">
               <span className="text-[#8B5E3C] font-extrabold text-sm leading-none">
-                NT$ {parseFloat(product.price).toLocaleString()}
+                NT${" "}
+                <EditableField
+                  value={product.price}
+                  onSave={(newPriceVal) => {
+                    const cleanVal = newPriceVal.replace("NT$", "").replace(/,/g, "").trim();
+                    onUpdateProduct && onUpdateProduct(product.id, { price: cleanVal });
+                  }}
+                />
               </span>
               <span className="text-[#8A7A72] line-through text-[10px] mt-0.5">
                 NT$ {parseFloat(product.regular_price).toLocaleString()}
@@ -137,7 +178,14 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
             </div>
           ) : (
             <span className="text-[#2C221E] font-extrabold text-sm">
-              NT$ {parseFloat(product.price).toLocaleString()}
+              NT${" "}
+              <EditableField
+                value={product.price}
+                onSave={(newPriceVal) => {
+                  const cleanVal = newPriceVal.replace("NT$", "").replace(/,/g, "").trim();
+                  onUpdateProduct && onUpdateProduct(product.id, { price: cleanVal });
+                }}
+              />
             </span>
           )}
         </div>

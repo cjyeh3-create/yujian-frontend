@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import EditableField from "./EditableField";
 
 interface HeaderProps {
   searchQuery?: string;
@@ -11,6 +12,14 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Navigation items state that can be edited in development
+  const [navItems, setNavItems] = useState([
+    { label: "智慧應用", href: "#apps-store" },
+    { label: "解決方案", href: "#solutions" },
+    { label: "開發者中心", href: "#developer" },
+    { label: "技術文件", href: "#docs" },
+  ]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -20,8 +29,30 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
       }
     };
     window.addEventListener("scroll", handleScroll);
+
+    // Load custom navigation labels in development mode
+    if (process.env.NODE_ENV === "development") {
+      const savedNav = localStorage.getItem("yujian_local_nav");
+      if (savedNav) {
+        try {
+          setNavItems(JSON.parse(savedNav));
+        } catch (e) {
+          console.error("Error loading local navigation items", e);
+        }
+      }
+    }
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleUpdateNav = (index: number, newLabel: string) => {
+    const updatedNav = [...navItems];
+    updatedNav[index].label = newLabel;
+    setNavItems(updatedNav);
+    if (process.env.NODE_ENV === "development") {
+      localStorage.setItem("yujian_local_nav", JSON.stringify(updatedNav));
+    }
+  };
 
   return (
     <header
@@ -74,22 +105,21 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
           />
         </div>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links (with EditableFields) */}
         <nav className="hidden lg:flex items-center gap-7">
-          {[
-            { label: "智慧應用", href: "#apps-store" },
-            { label: "解決方案", href: "#solutions" },
-            { label: "開發者中心", href: "#developer" },
-            { label: "技術文件", href: "#docs" },
-          ].map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
+          {navItems.map((item, index) => (
+            <div
+              key={item.href}
               className="text-xs font-bold text-[#6A5A53] hover:text-[#8B5E3C] transition-colors duration-250 relative group"
             >
-              {item.label}
+              <a href={item.href} className="inline-block">
+                <EditableField
+                  value={item.label}
+                  onSave={(newLabel) => handleUpdateNav(index, newLabel)}
+                />
+              </a>
               <span className="absolute bottom-[-6px] left-0 w-0 h-[2px] bg-[#8B5E3C] transition-all duration-300 group-hover:w-full" />
-            </a>
+            </div>
           ))}
         </nav>
 
@@ -176,20 +206,22 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
             </div>
           </div>
           <nav className="flex flex-col px-6 gap-3.5">
-            {[
-              { label: "智慧應用 Store", href: "#apps-store" },
-              { label: "解決方案 Solutions", href: "#solutions" },
-              { label: "開發者中心 Portal", href: "#developer" },
-              { label: "技術文件 Docs", href: "#docs" },
-            ].map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
+            {navItems.map((item, index) => (
+              <div
+                key={item.href}
                 className="text-sm font-bold text-[#6A5A53] hover:text-[#8B5E3C] transition-colors duration-200 py-1"
               >
-                {item.label}
-              </a>
+                <a
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-block"
+                >
+                  <EditableField
+                    value={item.label}
+                    onSave={(newLabel) => handleUpdateNav(index, newLabel)}
+                  />
+                </a>
+              </div>
             ))}
             <div className="border-t border-[#EBE5DC] pt-3.5 mt-1 flex flex-col gap-3">
               <button className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white py-2 rounded-xl text-xs font-bold tracking-wide transition-all">

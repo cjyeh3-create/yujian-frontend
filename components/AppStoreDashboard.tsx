@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import ProductCard, { WooCommerceProduct } from "./ProductCard";
+import EditableField from "./EditableField";
 import Image from "next/image";
 
 interface AppStoreDashboardProps {
@@ -11,13 +12,97 @@ interface AppStoreDashboardProps {
 }
 
 export default function AppStoreDashboard({ initialProducts }: AppStoreDashboardProps) {
-  const [products] = useState<WooCommerceProduct[]>(initialProducts);
+  const [isDev, setIsDev] = useState(false);
+  const [products, setProducts] = useState<WooCommerceProduct[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
   const [activeProduct, setActiveProduct] = useState<WooCommerceProduct | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<"overview" | "changelog" | "specs">("overview");
   const [purchaseSuccess, setPurchaseSuccess] = useState<number | null>(null);
+
+  // Local Page text elements state
+  const [pageTexts, setPageTexts] = useState({
+    heroBadge: "智慧海洋與物聯網軟體解決方案",
+    heroTitlePrefix: "引領智慧漁業",
+    heroTitleGradient: "數位化雲端",
+    heroTitleSuffix: " 時代",
+    heroDesc: "漁見 App Hub 匯聚多款專為遠洋漁業與智慧水產養殖設計的 App。從 AI 魚群影像辨識、智慧水質大數據預報到漁業銷存管理 ERP，一鍵快速下載，極速部署。",
+    storeTitle: "智慧漁業應用程式商城",
+    storeDesc: "篩選符合您漁船或養殖場硬體規格的數位 App 工具。",
+    ecosystemTitle: "漁業物聯網生態系 (Ecosystem)",
+    ecosystemDesc: "所有應用程式皆基於 Yujian Open API 規範開發，無縫整合浮標、水中無人機、水質感測器與氣象觀測終端。",
+    feat1Title: "1. 快速安裝與部署",
+    feat1Desc: "透過網頁控制台或專屬 SDK，將 App 部署至聯網監控設備、漁船平板或電腦中，免除複雜設定。",
+    feat2Title: "2. 雲端大數據整合",
+    feat2Desc: "所有數據自動備份並同步於雲端數據湖中，支援跨 App 交叉分析，輔助管理決策。",
+    feat3Title: "3. 安全去中心化履歷",
+    feat3Desc: "出貨數據串接 Hyperledger 區塊鏈，防篡改的銷存紀錄大幅提昇品牌價值與消費者信任度。",
+    devTitle: "加入漁見應用開發計畫",
+    devDesc: "不論您是獨立軟體開發者或硬體廠商，都可以使用我們的 API，為漁民和水產經銷商提供解決方案。上架軟體，開啟您的 SaaS 訂閱商業模式。",
+  });
+
+  // Sync state with parent updates
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
+
+  // Load custom values from localStorage in dev mode
+  useEffect(() => {
+    const devMode = process.env.NODE_ENV === "development";
+    setIsDev(devMode);
+
+    if (devMode) {
+      // 1. Load custom page texts
+      const savedTexts = localStorage.getItem("yujian_local_texts");
+      if (savedTexts) {
+        try {
+          setPageTexts((prev) => ({ ...prev, ...JSON.parse(savedTexts) }));
+        } catch (e) {
+          console.error("Error loading local page texts", e);
+        }
+      }
+
+      // 2. Load custom products
+      const savedProducts = localStorage.getItem("yujian_local_products");
+      if (savedProducts) {
+        try {
+          setProducts(JSON.parse(savedProducts));
+        } catch (e) {
+          console.error("Error loading local products", e);
+        }
+      }
+    }
+  }, []);
+
+  // Handler to update page texts in dev mode
+  const handleSaveText = (key: keyof typeof pageTexts, value: string) => {
+    const updatedTexts = { ...pageTexts, [key]: value };
+    setPageTexts(updatedTexts);
+    if (process.env.NODE_ENV === "development") {
+      localStorage.setItem("yujian_local_texts", JSON.stringify(updatedTexts));
+    }
+  };
+
+  // Handler to update product fields in dev mode
+  const handleUpdateProduct = (id: number, updatedFields: Partial<WooCommerceProduct>) => {
+    const updatedProducts = products.map((p) => {
+      if (p.id === id) {
+        const nextProd = { ...p, ...updatedFields };
+        // If modal details is open for this product, sync it immediately
+        if (activeProduct && activeProduct.id === id) {
+          setActiveProduct(nextProd);
+        }
+        return nextProd;
+      }
+      return p;
+    });
+
+    setProducts(updatedProducts);
+    if (process.env.NODE_ENV === "development") {
+      localStorage.setItem("yujian_local_products", JSON.stringify(updatedProducts));
+    }
+  };
 
   // Extract all unique categories
   const categoriesList = useMemo(() => {
@@ -32,9 +117,9 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
   const filteredProducts = useMemo(() => {
     return products
       .filter((p) => {
-        const matchesSearch =
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.short_description && p.short_description.toLowerCase().includes(searchQuery.toLowerCase()));
+        const nameMatch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const descMatch = p.short_description && p.short_description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = nameMatch || descMatch;
         
         const matchesCategory =
           selectedCategory === "all" ||
@@ -76,8 +161,16 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
   }, []);
 
   return (
-    <div className="bg-[#FAF6F0] text-[#2C221E] font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-[#8B5E3C] selection:text-white">
+    <div className="bg-[#FAF6F0] text-[#2C221E] font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-[#8B5E3C] selection:text-white relative">
       
+      {/* Floating dev visual editor indicator */}
+      {isDev && (
+        <div className="fixed bottom-6 right-6 z-[120] bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white px-4 py-2.5 rounded-2xl shadow-xl shadow-amber-900/20 border border-white/20 flex items-center gap-2 text-xs font-bold animate-pulse select-none pointer-events-none">
+          <span className="text-sm">🛠️</span>
+          <span>視覺編輯模式已啟用 (僅限本地)</span>
+        </div>
+      )}
+
       {/* Header component */}
       <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
@@ -95,15 +188,36 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5E3C]/10 border border-[#8B5E3C]/20 text-[#8B5E3C] text-xs font-bold tracking-wide">
                 <span className="w-1.5 h-1.5 bg-[#8B5E3C] rounded-full"></span>
-                智慧海洋與物聯網軟體解決方案
+                <EditableField
+                  value={pageTexts.heroBadge}
+                  onSave={(val) => handleSaveText("heroBadge", val)}
+                />
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#2C221E] leading-tight">
-                引領智慧漁業<br />
-                進入 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B]">數位化雲端</span> 時代
+                <EditableField
+                  value={pageTexts.heroTitlePrefix}
+                  onSave={(val) => handleSaveText("heroTitlePrefix", val)}
+                />
+                <br />
+                進入{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B]">
+                  <EditableField
+                    value={pageTexts.heroTitleGradient}
+                    onSave={(val) => handleSaveText("heroTitleGradient", val)}
+                  />
+                </span>
+                <EditableField
+                  value={pageTexts.heroTitleSuffix}
+                  onSave={(val) => handleSaveText("heroTitleSuffix", val)}
+                />
               </h1>
-              <p className="text-sm md:text-base text-[#6A5A53] max-w-xl mx-auto lg:mx-0 leading-relaxed font-semibold">
-                漁見 App Hub 匯聚多款專為遠洋漁業與智慧水產養殖設計的 App。從 AI 魚群影像辨識、智慧水質大數據預報到漁業銷存管理 ERP，一鍵快速下載，極速部署。
-              </p>
+              <div className="text-sm md:text-base text-[#6A5A53] max-w-xl mx-auto lg:mx-0 leading-relaxed font-semibold">
+                <EditableField
+                  as="p"
+                  value={pageTexts.heroDesc}
+                  onSave={(val) => handleSaveText("heroDesc", val)}
+                />
+              </div>
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
                 <a
                   href="#apps-store"
@@ -184,11 +298,17 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
             <div>
               <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C221E] tracking-wide">
-                智慧漁業應用程式商城
+                <EditableField
+                  value={pageTexts.storeTitle}
+                  onSave={(val) => handleSaveText("storeTitle", val)}
+                />
               </h2>
-              <p className="text-xs md:text-sm text-[#6A5A53] mt-2 font-semibold">
-                篩選符合您漁船或養殖場硬體規格的數位 App 工具。
-              </p>
+              <div className="text-xs md:text-sm text-[#6A5A53] mt-2 font-semibold">
+                <EditableField
+                  value={pageTexts.storeDesc}
+                  onSave={(val) => handleSaveText("storeDesc", val)}
+                />
+              </div>
             </div>
 
             {/* Sorting Dropdown */}
@@ -237,6 +357,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                     setActiveProduct(p);
                     setActiveModalTab("overview");
                   }}
+                  onUpdateProduct={handleUpdateProduct}
                 />
               ))}
             </div>
@@ -255,17 +376,26 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
         <section id="solutions" className="bg-[#F3EFE9]/40 border-y border-[#EBE5DC] py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C221E]">漁業物聯網生態系 (Ecosystem)</h2>
-              <p className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
-                所有應用程式皆基於 Yujian Open API 規範開發，無縫整合浮標、水中無人機、水質感測器與氣象觀測終端。
-              </p>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C221E]">
+                <EditableField
+                  value={pageTexts.ecosystemTitle}
+                  onSave={(val) => handleSaveText("ecosystemTitle", val)}
+                />
+              </h2>
+              <div className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
+                <EditableField
+                  as="p"
+                  value={pageTexts.ecosystemDesc}
+                  onSave={(val) => handleSaveText("ecosystemDesc", val)}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  title: "1. 快速安裝與部署",
-                  desc: "透過網頁控制台或專屬 SDK，將 App 部署至聯網監控設備、漁船平板或電腦中，免除複雜設定。",
+                  titleKey: "feat1Title" as const,
+                  descKey: "feat1Desc" as const,
                   icon: (
                     <svg className="w-6 h-6 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -273,8 +403,8 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   ),
                 },
                 {
-                  title: "2. 雲端大數據整合",
-                  desc: "所有數據自動備份並同步於雲端數據湖中，支援跨 App 交叉分析，輔助管理決策。",
+                  titleKey: "feat2Title" as const,
+                  descKey: "feat2Desc" as const,
                   icon: (
                     <svg className="w-6 h-6 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -282,8 +412,8 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   ),
                 },
                 {
-                  title: "3. 安全去中心化履歷",
-                  desc: "出貨數據串接 Hyperledger 區塊鏈，防篡改的銷存紀錄大幅提昇品牌價值與消費者信任度。",
+                  titleKey: "feat3Title" as const,
+                  descKey: "feat3Desc" as const,
                   icon: (
                     <svg className="w-6 h-6 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -295,8 +425,19 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   <div className="w-12 h-12 rounded-xl bg-[#FAF6F0] border border-[#EBE5DC] flex items-center justify-center">
                     {feat.icon}
                   </div>
-                  <h3 className="text-[#2C221E] font-extrabold text-base">{feat.title}</h3>
-                  <p className="text-xs text-[#6A5A53] leading-relaxed">{feat.desc}</p>
+                  <h3 className="text-[#2C221E] font-extrabold text-base">
+                    <EditableField
+                      value={pageTexts[feat.titleKey]}
+                      onSave={(val) => handleSaveText(feat.titleKey, val)}
+                    />
+                  </h3>
+                  <div className="text-xs text-[#6A5A53] leading-relaxed">
+                    <EditableField
+                      as="p"
+                      value={pageTexts[feat.descKey]}
+                      onSave={(val) => handleSaveText(feat.descKey, val)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -308,10 +449,19 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[#8B5E3C]/3 to-[#D9A05B]/3 blur-[120px] rounded-full pointer-events-none" />
           
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#2C221E]">加入漁見應用開發計畫</h2>
-            <p className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
-              不論您是獨立軟體開發者或硬體廠商，都可以使用我們的 API，為漁民和水產經銷商提供解決方案。上架軟體，開啟您的 SaaS 訂閱商業模式。
-            </p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#2C221E]">
+              <EditableField
+                value={pageTexts.devTitle}
+                onSave={(val) => handleSaveText("devTitle", val)}
+              />
+            </h2>
+            <div className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
+              <EditableField
+                as="p"
+                value={pageTexts.devDesc}
+                onSave={(val) => handleSaveText("devDesc", val)}
+              />
+            </div>
             <div className="pt-4 flex justify-center gap-4">
               <button className="bg-gradient-to-r from-[#8B5E3C] to-[#C8B195] hover:from-[#724C30] hover:to-[#B69F83] text-white font-extrabold px-6 py-3 rounded-xl text-xs tracking-wide transition-all shadow-md active:scale-98">
                 獲取開發者金鑰 (SDK)
@@ -353,18 +503,56 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   />
                 </div>
                 <div>
-                  <h3 className="text-[#2C221E] font-extrabold text-lg leading-snug">{activeProduct.name}</h3>
+                  <h3 className="text-[#2C221E] font-extrabold text-lg leading-snug">
+                    <EditableField
+                      value={activeProduct.name}
+                      onSave={(newVal) => handleUpdateProduct(activeProduct.id, { name: newVal })}
+                    />
+                  </h3>
                   <div className="flex items-center gap-2.5 mt-1 text-[11px] text-[#6A5A53]">
-                    <span className="text-[#8B5E3C] font-extrabold">{activeProduct.categories[0]?.name || "智慧工具"}</span>
+                    <span className="text-[#8B5E3C] font-extrabold">
+                      <EditableField
+                        value={activeProduct.categories[0]?.name || "智慧工具"}
+                        onSave={(newCatVal) =>
+                          handleUpdateProduct(activeProduct.id, {
+                            categories: [{ id: activeProduct.categories[0]?.id || 1, name: newCatVal }]
+                          })
+                        }
+                      />
+                    </span>
                     <span>•</span>
                     <span className="flex items-center text-amber-500 gap-0.5">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
-                      {activeProduct.meta_data?.find((m) => m.key === "_app_rating")?.value || "4.8"}
+                      <EditableField
+                        value={activeProduct.meta_data?.find((m) => m.key === "_app_rating")?.value || "4.8"}
+                        onSave={(newVal) => {
+                          const updatedMeta = (activeProduct.meta_data || []).map((m) =>
+                            m.key === "_app_rating" ? { ...m, value: newVal } : m
+                          );
+                          if (!updatedMeta.some((m) => m.key === "_app_rating")) {
+                            updatedMeta.push({ key: "_app_rating", value: newVal });
+                          }
+                          handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
+                        }}
+                      />
                     </span>
                     <span>•</span>
-                    <span>{activeProduct.meta_data?.find((m) => m.key === "_app_downloads")?.value || "1.5k+"} 下載</span>
+                    <span>
+                      <EditableField
+                        value={activeProduct.meta_data?.find((m) => m.key === "_app_downloads")?.value || "1.5k"}
+                        onSave={(newVal) => {
+                          const updatedMeta = (activeProduct.meta_data || []).map((m) =>
+                            m.key === "_app_downloads" ? { ...m, value: newVal } : m
+                          );
+                          if (!updatedMeta.some((m) => m.key === "_app_downloads")) {
+                            updatedMeta.push({ key: "_app_downloads", value: newVal });
+                          }
+                          handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
+                        }}
+                      /> 下載
+                    </span>
                   </div>
                 </div>
               </div>
@@ -425,14 +613,19 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
 
                   {/* Rich description */}
                   <div className="space-y-4 text-xs leading-relaxed text-[#6A5A53]">
-                    <h4 className="text-[#2C221E] font-extrabold text-sm">核心特點與價值</h4>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: activeProduct.description || 
-                          "<p>此軟體針對水產供應鏈提供全面數位化支持，具備流暢的使用介面、毫秒級的物聯網監控延遲、與可靠的安全區塊鏈認證。能有效解決海鮮追蹤、冷鏈控溫與即時水質預測痛點，最大化降低水產養殖的損失率。</p>"
-                      }}
-                      className="prose prose-stone prose-xs text-[#6A5A53] max-w-none prose-headings:text-[#2C221E] prose-p:leading-relaxed"
-                    />
+                    <h4 className="text-[#2C221E] font-extrabold text-sm">核心特點與價值 (可編輯內容)</h4>
+                    <div className="bg-[#FAF6F0]/20 p-4 border border-[#EBE5DC]/50 rounded-2xl">
+                      <EditableField
+                        as="div"
+                        value={
+                          activeProduct.description
+                            ? activeProduct.description.replace(/<[^>]*>/g, "")
+                            : "此軟體針對水產供應鏈提供全面數位化支持，具備流暢的使用介面、毫秒級的物聯網監控延遲、與可靠的安全區塊鏈認證。能有效解決海鮮追蹤、冷鏈控溫與即時水質預測痛點，最大化降低水產養殖的損失率。"
+                        }
+                        onSave={(newDesc) => handleUpdateProduct(activeProduct.id, { description: newDesc })}
+                        className="leading-relaxed block"
+                      />
+                    </div>
 
                     {/* Features list */}
                     <div className="grid grid-cols-2 gap-3 pt-2">
@@ -488,16 +681,57 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
               {activeModalTab === "specs" && (
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   {[
-                    { label: "軟體支援平台", val: activeProduct.meta_data?.find((m) => m.key === "_app_platforms")?.value || "Web, iOS, Android" },
-                    { label: "版本號碼", val: activeProduct.meta_data?.find((m) => m.key === "_app_version")?.value || "v2.1.0" },
-                    { label: "授權類型", val: parseFloat(activeProduct.price) === 0 ? "免費授權" : "付費訂閱制 / 買斷授權" },
-                    { label: "最低系統需求", val: "iOS 15.0+ / Android 9.0+ / Chrome 100+ 瀏覽器" },
-                    { label: "物聯網通訊協定", val: "MQTT, HTTP REST API, Modbus TCP" },
-                    { label: "網路需求", val: "具備 4G/5G 或 Wi-Fi 網路連線能力 (離線模式支援最長 48 小時數據暫存)" },
+                    {
+                      label: "軟體支援平台",
+                      val: activeProduct.meta_data?.find((m) => m.key === "_app_platforms")?.value || "Web, iOS, Android",
+                      key: "_app_platforms",
+                    },
+                    {
+                      label: "版本號碼",
+                      val: activeProduct.meta_data?.find((m) => m.key === "_app_version")?.value || "v2.1.0",
+                      key: "_app_version",
+                    },
+                    {
+                      label: "授權類型",
+                      val: parseFloat(activeProduct.price) === 0 ? "免費授權" : "付費訂閱制 / 買斷授權",
+                      key: null,
+                    },
+                    {
+                      label: "最低系統需求",
+                      val: "iOS 15.0+ / Android 9.0+ / Chrome 100+ 瀏覽器",
+                      key: null,
+                    },
+                    {
+                      label: "物聯網通訊協定",
+                      val: "MQTT, HTTP REST API, Modbus TCP",
+                      key: null,
+                    },
+                    {
+                      label: "網路需求",
+                      val: "具備 4G/5G 或 Wi-Fi 網路連線能力 (離線模式支援最長 48 小時數據暫存)",
+                      key: null,
+                    },
                   ].map((spec, idx) => (
                     <div key={idx} className="bg-[#FAF6F0]/60 p-3 rounded-xl border border-[#EBE5DC]/60">
                       <div className="text-[#8A7A72] mb-1 font-semibold">{spec.label}</div>
-                      <div className="text-[#2C221E] font-bold">{spec.val}</div>
+                      <div className="text-[#2C221E] font-bold">
+                        {spec.key ? (
+                          <EditableField
+                            value={spec.val}
+                            onSave={(newVal) => {
+                              const updatedMeta = (activeProduct.meta_data || []).map((m) =>
+                                m.key === spec.key ? { ...m, value: newVal } : m
+                              );
+                              if (!updatedMeta.some((m) => m.key === spec.key)) {
+                                updatedMeta.push({ key: spec.key, value: newVal });
+                              }
+                              handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
+                            }}
+                          />
+                        ) : (
+                          spec.val
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
