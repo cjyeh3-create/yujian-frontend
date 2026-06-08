@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import ProductCard, { WooCommerceProduct } from "./ProductCard";
 import VisualInspectorModal, { EditableConfig } from "./VisualInspectorModal";
 import Image from "next/image";
+import CookieConsent from "./CookieConsent";
 
 interface AppStoreDashboardProps {
   initialProducts: WooCommerceProduct[];
@@ -27,6 +28,9 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
 
   // Time state to prevent hydration mismatches
   const [timeString, setTimeString] = useState("");
+
+  // Cookie consent modal state
+  const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
 
   // Local Page text elements state
   const [pageTexts, setPageTexts] = useState({
@@ -800,7 +804,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
       </main>
 
       {/* Footer component */}
-      <Footer />
+      <Footer onOpenCookieSettings={() => setIsCookieModalOpen(true)} />
 
       {/* App Details Modal (Overlay) */}
       {activeProduct && (
@@ -1093,6 +1097,13 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           onClose={() => setActiveEditConfig(null)}
         />
       )}
+
+      {/* Cookie Consent & Settings */}
+      <CookieConsent
+        isOpenSettings={isCookieModalOpen}
+        onCloseSettings={() => setIsCookieModalOpen(false)}
+        onOpenSettings={() => setIsCookieModalOpen(true)}
+      />
 
     </div>
   );

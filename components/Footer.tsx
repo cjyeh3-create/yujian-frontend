@@ -1,4 +1,8 @@
-export default function Footer() {
+interface FooterProps {
+  onOpenCookieSettings?: () => void;
+}
+
+export default function Footer({ onOpenCookieSettings }: FooterProps) {
   return (
     <footer className="bg-[#F3EFE9] text-[#6A5A53] border-t border-[#EBE5DC]">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -113,9 +117,22 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-[#EBE5DC] py-6 text-center text-[10px] text-[#8A7A72]">
-        <p>
-          &copy; {new Date().getFullYear()} 漁見科技 Yujian Digital Tech. All rights reserved.
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <p>
+            &copy; {new Date().getFullYear()} 漁見科技 Yujian Digital Tech. All rights reserved.
+          </p>
+          {onOpenCookieSettings && (
+            <>
+              <span className="hidden sm:inline text-[#EBE5DC]">|</span>
+              <button
+                onClick={onOpenCookieSettings}
+                className="hover:text-[#8B5E3C] transition-colors duration-200 cursor-pointer focus:outline-none"
+              >
+                Cookie 設置
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </footer>
   );
