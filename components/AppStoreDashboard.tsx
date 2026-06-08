@@ -515,7 +515,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   {/* Status footer */}
                   <div className="flex items-center justify-between text-[9px] text-[#8A7A72] border-t border-[#EBE5DC]/80 pt-3 z-10">
                     <span>訊號連線強度: 優良 (98%)</span>
-                    <span>更新時間: {timeString}</span>
+                    <span suppressHydrationWarning>更新時間: {timeString}</span>
                   </div>
                 </div>
               </div>
