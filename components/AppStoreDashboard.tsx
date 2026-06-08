@@ -580,6 +580,22 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                 </button>
               )}
 
+              {/* Search Bar next to sorting */}
+              <div className="flex items-center relative w-full sm:w-60">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6A5A53]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="搜尋軟體名稱或描述..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-[#EBE5DC] rounded-xl py-2 pl-9 pr-4 text-xs text-[#2C221E] placeholder-[#8A7A72] focus:outline-none focus:border-[#8B5E3C] transition-all duration-300 shadow-sm"
+                />
+              </div>
+
               <div className="flex items-center gap-3">
                 <span className="text-xs text-[#8A7A72] font-bold">排序</span>
                 <select

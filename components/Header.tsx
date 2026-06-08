@@ -89,21 +89,7 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
           </div>
         </a>
 
-        {/* Search Bar (Desktop) */}
-        <div className="hidden md:flex items-center relative max-w-xs w-full mx-6">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6A5A53]">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="搜尋智慧漁業 App..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-            className="w-full bg-[#FAF6F0]/80 border border-[#EBE5DC] rounded-xl py-1.5 pl-9 pr-4 text-xs text-[#2C221E] placeholder-[#8A7A72] focus:outline-none focus:border-[#8B5E3C] focus:bg-white transition-all duration-300"
-          />
-        </div>
+
 
         {/* Desktop Navigation Links (with EditableFields) */}
         <nav className="hidden lg:flex items-center gap-7">
@@ -188,23 +174,7 @@ export default function Header({ searchQuery = "", setSearchQuery }: HeaderProps
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-[#EBE5DC] shadow-2xl py-4 animate-fadeIn">
-          {/* Mobile Search Input */}
-          <div className="px-6 mb-4 md:hidden">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6A5A53]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="搜尋智慧漁業 App..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-                className="w-full bg-[#FAF6F0] border border-[#EBE5DC] rounded-xl py-2 pl-9 pr-4 text-xs text-[#2C221E] placeholder-[#8A7A72] focus:outline-none focus:border-[#8B5E3C]"
-              />
-            </div>
-          </div>
+
           <nav className="flex flex-col px-6 gap-3.5">
             {navItems.map((item, index) => (
               <div
