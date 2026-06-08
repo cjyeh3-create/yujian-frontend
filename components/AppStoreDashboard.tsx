@@ -282,8 +282,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
     return products
       .filter((p) => {
         const nameMatch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const descMatch = p.short_description && p.short_description.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesSearch = nameMatch || descMatch;
+        const matchesSearch = nameMatch;
         
         const matchesCategory =
           selectedCategory === "all" ||
@@ -589,7 +588,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                 </div>
                 <input
                   type="text"
-                  placeholder="搜尋軟體名稱或描述..."
+                  placeholder="搜尋軟體名稱..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white border border-[#EBE5DC] rounded-xl py-2 pl-9 pr-4 text-xs text-[#2C221E] placeholder-[#8A7A72] focus:outline-none focus:border-[#8B5E3C] transition-all duration-300 shadow-sm"
