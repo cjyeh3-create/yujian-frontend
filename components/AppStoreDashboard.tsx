@@ -25,6 +25,9 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
   // Inspector Modal configuration state
   const [activeEditConfig, setActiveEditConfig] = useState<EditableConfig | null>(null);
 
+  // Time state to prevent hydration mismatches
+  const [timeString, setTimeString] = useState("");
+
   // Local Page text elements state
   const [pageTexts, setPageTexts] = useState({
     heroBadge: "智慧海洋與物聯網軟體解決方案",
@@ -80,6 +83,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
 
   // Load custom values from localStorage in dev mode
   useEffect(() => {
+    setTimeString(new Date().toLocaleTimeString());
     const devMode = process.env.NODE_ENV === "development";
     setIsDev(devMode);
 
@@ -511,7 +515,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   {/* Status footer */}
                   <div className="flex items-center justify-between text-[9px] text-[#8A7A72] border-t border-[#EBE5DC]/80 pt-3 z-10">
                     <span>訊號連線強度: 優良 (98%)</span>
-                    <span>更新時間: {new Date().toLocaleTimeString()}</span>
+                    <span>更新時間: {timeString}</span>
                   </div>
                 </div>
               </div>
