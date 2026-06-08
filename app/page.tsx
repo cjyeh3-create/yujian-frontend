@@ -5,6 +5,27 @@ import { WooCommerceProduct } from "@/components/ProductCard";
 // High-quality mock apps data used as fallback when API credentials are not set
 const mockApps: WooCommerceProduct[] = [
   {
+    id: 123,
+    name: "飲料訂購系統 (Drink Ordering App)",
+    price: "0",
+    regular_price: "0",
+    sale_price: "",
+    images: [
+      { src: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=600&auto=format&fit=crop&q=80", alt: "Drink Ordering App" }
+    ],
+    stock_status: "instock",
+    short_description: "專為手搖飲與餐飲店家設計的行動點餐入口。支援冷熱甜度冰量客製化、購物車即時結帳與雲端訂單通知。",
+    description: "<p>飲料訂購系統是一款基於 API 架構打造的餐飲點單 App 示範模組。整合前台點餐 UI、甜度冰量自訂加料、即時計算金額、以及訂單發送 API。本系統展現了 App Portal 平台的 SDK 化核心理念，將獨立的餐飲管理功能模組化為 API 服務，完美融入漁業生態系的日常補給管理中。</p>",
+    categories: [{ id: 7, name: "餐飲點餐" }],
+    meta_data: [
+      { key: "_app_version", value: "v1.0.0" },
+      { key: "_app_rating", value: "5.0" },
+      { key: "_app_downloads", value: "NEW" },
+      { key: "_app_platforms", value: "Web, iOS, Android" },
+      { key: "_app_route", value: "/apps/drink-order" }
+    ]
+  },
+  {
     id: 101,
     name: "魚見 AI 監控助手 (FishEye AI Monitor)",
     price: "1280",

@@ -273,29 +273,39 @@ export default function ProductCard({ product, onOpenDetails, onEditClick }: Pro
             詳情
           </button>
 
-          {/* Add to Cart CTA */}
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock_status !== "instock"}
-            className={`flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-300 ${
-              product.stock_status !== "instock"
-                ? "bg-[#FAF6F0] text-[#8A7A72] cursor-not-allowed border border-[#EBE5DC]"
-                : isAdded
-                ? "bg-[#52796F] text-white shadow-md shadow-emerald-900/10"
-                : "bg-[#8B5E3C] hover:bg-[#724C30] text-white hover:shadow-md hover:shadow-amber-900/10 active:scale-95"
-            }`}
-          >
-            {isAdded ? (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>已取得</span>
-              </>
-            ) : (
-              <span>取得</span>
-            )}
-          </button>
+          {/* Add to Cart or Open App CTA */}
+          {product.meta_data?.find((m) => m.key === "_app_route")?.value ? (
+            <a
+              href={product.meta_data.find((m) => m.key === "_app_route")!.value}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white hover:shadow-md hover:shadow-amber-900/10 active:scale-95 transition-all"
+            >
+              開啟
+            </a>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              disabled={product.stock_status !== "instock"}
+              className={`flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-300 ${
+                product.stock_status !== "instock"
+                  ? "bg-[#FAF6F0] text-[#8A7A72] cursor-not-allowed border border-[#EBE5DC]"
+                  : isAdded
+                  ? "bg-[#52796F] text-white shadow-md shadow-emerald-900/10"
+                  : "bg-[#8B5E3C] hover:bg-[#724C30] text-white hover:shadow-md hover:shadow-amber-900/10 active:scale-95"
+              }`}
+            >
+              {isAdded ? (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>已取得</span>
+                </>
+              ) : (
+                <span>取得</span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

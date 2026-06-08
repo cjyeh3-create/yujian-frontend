@@ -1073,31 +1073,43 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                 >
                   取消
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handlePurchase(activeProduct.id)}
-                  disabled={activeProduct.stock_status !== "instock"}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-wide transition-all ${
-                    activeProduct.stock_status !== "instock"
-                      ? "bg-[#FAF6F0] text-[#8A7A72] border border-[#EBE5DC] cursor-not-allowed"
-                      : purchaseSuccess === activeProduct.id
-                      ? "bg-[#52796F] text-white"
-                      : "bg-[#8B5E3C] hover:bg-[#724C30] text-white"
-                  }`}
-                >
-                  {purchaseSuccess === activeProduct.id ? (
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      購買成功，取得金鑰中...
-                    </span>
-                  ) : parseFloat(activeProduct.price) === 0 || activeProduct.price === "" ? (
-                    "立即下載應用"
-                  ) : (
-                    "加入購物車"
-                  )}
-                </button>
+                {activeProduct.meta_data?.find((m) => m.key === "_app_route")?.value ? (
+                  <a
+                    href={activeProduct.meta_data.find((m) => m.key === "_app_route")!.value}
+                    className="px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-wide bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white hover:shadow-lg shadow-amber-900/10 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    <span>開啟線上應用</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handlePurchase(activeProduct.id)}
+                    disabled={activeProduct.stock_status !== "instock"}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-wide transition-all ${
+                      activeProduct.stock_status !== "instock"
+                        ? "bg-[#FAF6F0] text-[#8A7A72] border border-[#EBE5DC] cursor-not-allowed"
+                        : purchaseSuccess === activeProduct.id
+                        ? "bg-[#52796F] text-white"
+                        : "bg-[#8B5E3C] hover:bg-[#724C30] text-white"
+                    }`}
+                  >
+                    {purchaseSuccess === activeProduct.id ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        購買成功，取得金鑰中...
+                      </span>
+                    ) : parseFloat(activeProduct.price) === 0 || activeProduct.price === "" ? (
+                      "立即下載應用"
+                    ) : (
+                      "加入購物車"
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
