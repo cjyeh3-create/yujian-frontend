@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import ProductCard, { WooCommerceProduct } from "./ProductCard";
-import EditableField from "./EditableField";
+import VisualInspectorModal, { EditableConfig } from "./VisualInspectorModal";
 import Image from "next/image";
 
 interface AppStoreDashboardProps {
@@ -17,9 +17,13 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
+  
   const [activeProduct, setActiveProduct] = useState<WooCommerceProduct | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<"overview" | "changelog" | "specs">("overview");
   const [purchaseSuccess, setPurchaseSuccess] = useState<number | null>(null);
+
+  // Inspector Modal configuration state
+  const [activeEditConfig, setActiveEditConfig] = useState<EditableConfig | null>(null);
 
   // Local Page text elements state
   const [pageTexts, setPageTexts] = useState({
@@ -42,7 +46,34 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
     devDesc: "不論您是獨立軟體開發者或硬體廠商，都可以使用我們的 API，為漁民和水產經銷商提供解決方案。上架軟體，開啟您的 SaaS 訂閱商業模式。",
   });
 
-  // Sync state with parent updates
+  // Custom text colors configurations
+  const [textColors, setTextColors] = useState({
+    heroBadgeColor: "#8B5E3C",
+    heroTitlePrefixColor: "#2C221E",
+    heroTitleGradientStart: "#8B5E3C",
+    heroTitleGradientEnd: "#D9A05B",
+    heroTitleSuffixColor: "#2C221E",
+    heroDescColor: "#6A5A53",
+    storeTitleColor: "#2C221E",
+    storeDescColor: "#6A5A53",
+    ecosystemTitleColor: "#2C221E",
+    ecosystemDescColor: "#6A5A53",
+    devTitleColor: "#2C221E",
+    devDescColor: "#6A5A53",
+  });
+
+  // Layout and Frame sizing configurations
+  const [layoutConfigs, setLayoutConfigs] = useState({
+    heroPadding: "py-20", // py-12, py-20, py-28
+    heroMockupWidth: "500", // px
+    gridColumns: "3", // 2, 3, 4
+    gridGap: "gap-6", // gap-4, gap-6, gap-8
+    ecosystemBg: "bg-[#F3EFE9]/40", // bg-[#FAF6F0], bg-white, bg-[#F3EFE9]/40
+    devPadding: "py-24", // py-16, py-24, py-32
+    heroMockupUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80",
+  });
+
+  // Sync state with parent WooCommerce products updates
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
@@ -63,7 +94,27 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
         }
       }
 
-      // 2. Load custom products
+      // 2. Load text colors
+      const savedColors = localStorage.getItem("yujian_local_colors");
+      if (savedColors) {
+        try {
+          setTextColors((prev) => ({ ...prev, ...JSON.parse(savedColors) }));
+        } catch (e) {
+          console.error("Error loading local colors", e);
+        }
+      }
+
+      // 3. Load layout configurations
+      const savedLayouts = localStorage.getItem("yujian_local_layouts");
+      if (savedLayouts) {
+        try {
+          setLayoutConfigs((prev) => ({ ...prev, ...JSON.parse(savedLayouts) }));
+        } catch (e) {
+          console.error("Error loading local layouts", e);
+        }
+      }
+
+      // 4. Load custom products
       const savedProducts = localStorage.getItem("yujian_local_products");
       if (savedProducts) {
         try {
@@ -74,15 +125,6 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
       }
     }
   }, []);
-
-  // Handler to update page texts in dev mode
-  const handleSaveText = (key: keyof typeof pageTexts, value: string) => {
-    const updatedTexts = { ...pageTexts, [key]: value };
-    setPageTexts(updatedTexts);
-    if (process.env.NODE_ENV === "development") {
-      localStorage.setItem("yujian_local_texts", JSON.stringify(updatedTexts));
-    }
-  };
 
   // Handler to update product fields in dev mode
   const handleUpdateProduct = (id: number, updatedFields: Partial<WooCommerceProduct>) => {
@@ -103,6 +145,120 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
       localStorage.setItem("yujian_local_products", JSON.stringify(updatedProducts));
     }
   };
+
+  const handlePurchase = (productId: number) => {
+    setPurchaseSuccess(productId);
+    setTimeout(() => setPurchaseSuccess(null), 3000);
+  };
+
+  const appScreenshots = [
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&auto=format&fit=crop&q=80",
+  ];
+
+  // Open property inspector helper
+  const openInspector = (
+    id: string,
+    type: "text" | "image" | "layout" | "product",
+    label: string,
+    value: string,
+    color?: string,
+    targetField?: string
+  ) => {
+    if (!isDev) return;
+    setActiveEditConfig({ id, type, label, value, color, targetField });
+  };
+
+  // Save changes from VisualInspectorModal
+  const handleInspectorSave = (
+    id: string,
+    updated: {
+      value: string;
+      color?: string;
+      targetField?: string;
+      [key: string]: any;
+    }
+  ) => {
+    // 1. Text & color save
+    if (activeEditConfig?.type === "text") {
+      const nextTexts = { ...pageTexts, [id]: updated.value };
+      setPageTexts(nextTexts);
+      localStorage.setItem("yujian_local_texts", JSON.stringify(nextTexts));
+
+      if (updated.color) {
+        const colorKey = `${id}Color` as keyof typeof textColors;
+        let nextColors = { ...textColors };
+
+        if (id === "heroTitleGradient") {
+          nextColors.heroTitleGradientStart = updated.color;
+          nextColors.heroTitleGradientEnd =
+            updated.color === "#8B5E3C" ? "#D9A05B" : shadeColor(updated.color, 25);
+        } else if (colorKey in textColors) {
+          nextColors = { ...nextColors, [colorKey]: updated.color };
+        }
+
+        setTextColors(nextColors);
+        localStorage.setItem("yujian_local_colors", JSON.stringify(nextColors));
+      }
+    }
+    
+    // 2. Image save
+    else if (activeEditConfig?.type === "image") {
+      if (id === "heroMockupUrl") {
+        const nextLayout = { ...layoutConfigs, heroMockupUrl: updated.value };
+        setLayoutConfigs(nextLayout);
+        localStorage.setItem("yujian_local_layouts", JSON.stringify(nextLayout));
+      } else {
+        const prodId = parseInt(id);
+        handleUpdateProduct(prodId, { images: [{ src: updated.value }] });
+      }
+    }
+    
+    // 3. Layout config save
+    else if (activeEditConfig?.type === "layout") {
+      const field = updated.targetField as keyof typeof layoutConfigs;
+      if (field in layoutConfigs) {
+        const nextLayout = { ...layoutConfigs, [field]: updated.value };
+        setLayoutConfigs(nextLayout);
+        localStorage.setItem("yujian_local_layouts", JSON.stringify(nextLayout));
+      }
+    }
+    
+    // 4. Product field save
+    else if (activeEditConfig?.type === "product") {
+      const prodId = parseInt(id);
+      const field = updated.targetField || "name";
+
+      if (field === "name") {
+        handleUpdateProduct(prodId, { name: updated.value });
+      } else if (field === "price") {
+        handleUpdateProduct(prodId, { price: updated.value });
+      } else if (field === "category") {
+        handleUpdateProduct(prodId, { categories: [{ id: 1, name: updated.value }] });
+      } else if (field === "description") {
+        handleUpdateProduct(prodId, { description: `<p>${updated.value}</p>` });
+      }
+    }
+  };
+
+  // Helper function to shade colors for gradients
+  function shadeColor(color: string, percent: number) {
+    if (!color.startsWith("#") || color.length !== 7) return "#D9A05B";
+    let R = parseInt(color.substring(1, 3), 16);
+    let G = parseInt(color.substring(3, 5), 16);
+    let B = parseInt(color.substring(5, 7), 16);
+
+    R = Math.min(255, Math.floor(R * (1 + percent / 100)));
+    G = Math.min(255, Math.floor(G * (1 + percent / 100)));
+    B = Math.min(255, Math.floor(B * (1 + percent / 100)));
+
+    const rHex = R.toString(16).padStart(2, "0");
+    const gHex = G.toString(16).padStart(2, "0");
+    const bHex = B.toString(16).padStart(2, "0");
+
+    return `#${rHex}${gHex}${bHex}`;
+  }
 
   // Extract all unique categories
   const categoriesList = useMemo(() => {
@@ -139,26 +295,18 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           const ratingB = parseFloat(b.meta_data?.find((m) => m.key === "_app_rating")?.value || "0");
           return ratingB - ratingA;
         }
-        // default "popular" sorting by downloads count
         const downA = parseFloat(a.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
         const downB = parseFloat(b.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
         return downB - downA;
       });
   }, [products, searchQuery, selectedCategory, sortBy]);
 
-  const handlePurchase = (productId: number) => {
-    setPurchaseSuccess(productId);
-    setTimeout(() => setPurchaseSuccess(null), 3000);
+  // Editable element style wrapper helper
+  const editableStyle = (label: string, borderClass = "hover:outline-[#8B5E3C]/50 hover:bg-[#8B5E3C]/5") => {
+    return isDev
+      ? `hover:outline hover:outline-dashed hover:outline-1 ${borderClass} cursor-pointer rounded px-0.5 transition-all duration-150 relative`
+      : "";
   };
-
-  // Screenshots mock for active modal
-  const appScreenshots = useMemo(() => {
-    return [
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&auto=format&fit=crop&q=80",
-    ];
-  }, []);
 
   return (
     <div className="bg-[#FAF6F0] text-[#2C221E] font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-[#8B5E3C] selection:text-white relative">
@@ -167,7 +315,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
       {isDev && (
         <div className="fixed bottom-6 right-6 z-[120] bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white px-4 py-2.5 rounded-2xl shadow-xl shadow-amber-900/20 border border-white/20 flex items-center gap-2 text-xs font-bold animate-pulse select-none pointer-events-none">
           <span className="text-sm">🛠️</span>
-          <span>視覺編輯模式已啟用 (僅限本地)</span>
+          <span>視覺編輯與排版模式已啟用 (僅限本地)</span>
         </div>
       )}
 
@@ -178,7 +326,19 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
       <main className="flex-grow pt-24">
         
         {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 px-6 border-b border-[#EBE5DC] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FAF6F0] via-[#FAF6F0] to-white">
+        <section
+          onClick={() =>
+            openInspector("heroPadding", "layout", "Hero 區塊間距", layoutConfigs.heroPadding, undefined, "heroPadding")
+          }
+          className={`relative overflow-hidden px-6 border-b border-[#EBE5DC] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FAF6F0] via-[#FAF6F0] to-white transition-all duration-300 ${
+            layoutConfigs.heroPadding === "py-12"
+              ? "py-12"
+              : layoutConfigs.heroPadding === "py-28"
+              ? "py-28"
+              : "py-20"
+          } ${editableStyle("Hero 區塊", "hover:outline-[#FAF6F0] hover:outline-offset-[-4px]")}`}
+          title={isDev ? "點選修改 Hero 區塊間距 (Padding)" : undefined}
+        >
           {/* Coffee-colored warm decorative spots */}
           <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#8B5E3C]/3 blur-[120px] rounded-full pointer-events-none" />
           <div className="absolute top-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 bg-[#D9A05B]/3 blur-[100px] rounded-full pointer-events-none" />
@@ -186,38 +346,75 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
             {/* Hero Left Content */}
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5E3C]/10 border border-[#8B5E3C]/20 text-[#8B5E3C] text-xs font-bold tracking-wide">
+              {/* Badge */}
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInspector("heroBadge", "text", "Hero 小徽章", pageTexts.heroBadge, textColors.heroBadgeColor);
+                }}
+                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5E3C]/10 border border-[#8B5E3C]/20 text-xs font-bold tracking-wide ${editableStyle("Hero徽章")}`}
+                style={{ color: textColors.heroBadgeColor }}
+                title={isDev ? "點選編輯徽章文字與顏色" : undefined}
+              >
                 <span className="w-1.5 h-1.5 bg-[#8B5E3C] rounded-full"></span>
-                <EditableField
-                  value={pageTexts.heroBadge}
-                  onSave={(val) => handleSaveText("heroBadge", val)}
-                />
+                <span>{pageTexts.heroBadge}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#2C221E] leading-tight">
-                <EditableField
-                  value={pageTexts.heroTitlePrefix}
-                  onSave={(val) => handleSaveText("heroTitlePrefix", val)}
-                />
+
+              {/* Title */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight select-none">
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openInspector("heroTitlePrefix", "text", "Hero 標題前綴", pageTexts.heroTitlePrefix, textColors.heroTitlePrefixColor);
+                  }}
+                  className={`inline-block ${editableStyle("標題前綴")}`}
+                  style={{ color: textColors.heroTitlePrefixColor }}
+                  title={isDev ? "點選編輯標題文字與顏色" : undefined}
+                >
+                  {pageTexts.heroTitlePrefix}
+                </span>
                 <br />
                 進入{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B]">
-                  <EditableField
-                    value={pageTexts.heroTitleGradient}
-                    onSave={(val) => handleSaveText("heroTitleGradient", val)}
-                  />
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openInspector("heroTitleGradient", "text", "Hero 漸層標題", pageTexts.heroTitleGradient, textColors.heroTitleGradientStart);
+                  }}
+                  className={`inline-block text-transparent bg-clip-text bg-gradient-to-r ${editableStyle("漸層標題")}`}
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${textColors.heroTitleGradientStart}, ${textColors.heroTitleGradientEnd})`,
+                  }}
+                  title={isDev ? "點選編輯漸層文字與主題色" : undefined}
+                >
+                  {pageTexts.heroTitleGradient}
                 </span>
-                <EditableField
-                  value={pageTexts.heroTitleSuffix}
-                  onSave={(val) => handleSaveText("heroTitleSuffix", val)}
-                />
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openInspector("heroTitleSuffix", "text", "Hero 標題後綴", pageTexts.heroTitleSuffix, textColors.heroTitleSuffixColor);
+                  }}
+                  className={`inline-block ${editableStyle("標題後綴")}`}
+                  style={{ color: textColors.heroTitleSuffixColor }}
+                  title={isDev ? "點選編輯後綴文字與顏色" : undefined}
+                >
+                  {pageTexts.heroTitleSuffix}
+                </span>
               </h1>
-              <div className="text-sm md:text-base text-[#6A5A53] max-w-xl mx-auto lg:mx-0 leading-relaxed font-semibold">
-                <EditableField
-                  as="p"
-                  value={pageTexts.heroDesc}
-                  onSave={(val) => handleSaveText("heroDesc", val)}
-                />
+
+              {/* Subtitle / Description */}
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInspector("heroDesc", "text", "Hero 說明描述", pageTexts.heroDesc, textColors.heroDescColor);
+                }}
+                className={`text-sm md:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed font-semibold block ${editableStyle("Hero描述")}`}
+                style={{ color: textColors.heroDescColor }}
+                title={isDev ? "點選編輯描述文字與顏色" : undefined}
+              >
+                {pageTexts.heroDesc}
               </div>
+
+              {/* CTA Buttons */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
                 <a
                   href="#apps-store"
@@ -234,13 +431,42 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
               </div>
             </div>
 
-            {/* Hero Right: Cafe-dashboard Mockup */}
-            <div className="lg:col-span-6 relative">
-              <div className="relative mx-auto max-w-[500px] aspect-[4/3] rounded-2xl bg-white border border-[#EBE5DC] p-3 shadow-xl shadow-amber-900/5 backdrop-blur-md overflow-hidden group">
+            {/* Hero Right: Cafe-dashboard Mockup & Width customization */}
+            <div className="lg:col-span-6 relative flex justify-center">
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInspector("heroMockup", "layout", "儀表板框架寬度", layoutConfigs.heroMockupWidth, undefined, "heroMockupWidth");
+                }}
+                className={`relative w-full aspect-[4/3] rounded-2xl bg-white border border-[#EBE5DC] p-3 shadow-xl shadow-amber-900/5 backdrop-blur-md overflow-hidden group select-none ${editableStyle("儀表板框架", "hover:outline-[#8B5E3C]/60 hover:outline-offset-2")}`}
+                style={{ maxWidth: `${layoutConfigs.heroMockupWidth}px` }}
+                title={isDev ? "點選調整儀表板寬度" : undefined}
+              >
+                
+                {/* Image overlay trigger in Dev */}
+                {isDev && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openInspector("heroMockupUrl", "image", "儀表板背景圖片", layoutConfigs.heroMockupUrl, undefined, "heroMockupUrl");
+                    }}
+                    className="absolute top-4 right-4 z-20 bg-white/95 border border-[#EBE5DC] text-[#2C221E] hover:text-[#8B5E3C] text-[10px] font-bold px-2 py-1 rounded-xl shadow-sm transition-all hover:scale-105"
+                    title="更換圖片"
+                  >
+                    🖼️ 更換背景圖
+                  </button>
+                )}
+
                 {/* Inside Dashboard mockup */}
-                <div className="w-full h-full rounded-xl bg-[#FAF6F0] border border-[#EBE5DC]/50 p-4 flex flex-col justify-between select-none">
+                <div className="w-full h-full rounded-xl bg-[#FAF6F0] border border-[#EBE5DC]/50 p-4 flex flex-col justify-between relative">
+                  
+                  {/* Dashboard background image layer */}
+                  <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
+                    <img src={layoutConfigs.heroMockupUrl} alt="bg" className="w-full h-full object-cover" />
+                  </div>
+
                   {/* Top Bar */}
-                  <div className="flex items-center justify-between border-b border-[#EBE5DC]/80 pb-3">
+                  <div className="flex items-center justify-between border-b border-[#EBE5DC]/80 pb-3 z-10">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-rose-400"></span>
                       <span className="w-3 h-3 rounded-full bg-amber-400"></span>
@@ -250,7 +476,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   </div>
                   
                   {/* Chart and stats grid */}
-                  <div className="grid grid-cols-3 gap-3 my-4 flex-grow">
+                  <div className="grid grid-cols-3 gap-3 my-4 flex-grow z-10">
                     <div className="col-span-2 rounded-lg bg-white border border-[#EBE5DC]/60 p-3 flex flex-col justify-between shadow-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-[#6A5A53] font-bold">即時溶氧量 (DO)</span>
@@ -265,7 +491,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                     <div className="col-span-1 rounded-lg bg-white border border-[#EBE5DC]/60 p-3 flex flex-col justify-between shadow-sm">
                       <span className="text-[10px] text-[#6A5A53] font-bold">智慧辨識計數</span>
                       <div className="text-xl font-extrabold text-[#2C221E] font-mono mt-1">2,482 <span className="text-[9px] text-[#8B5E3C]">隻</span></div>
-                      <span className="text-[9px] text-[#8A7A72] leading-normal font-semibold">AI 攝影機即時監測中</span>
+                      <span className="text-[9px] text-[#8A7A72] leading-normal font-semibold font-sans">AI 攝影機即時監測中</span>
                     </div>
 
                     <div className="col-span-1 rounded-lg bg-white border border-[#EBE5DC]/60 p-2.5 text-center shadow-sm">
@@ -283,7 +509,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   </div>
 
                   {/* Status footer */}
-                  <div className="flex items-center justify-between text-[9px] text-[#8A7A72] border-t border-[#EBE5DC]/80 pt-3">
+                  <div className="flex items-center justify-between text-[9px] text-[#8A7A72] border-t border-[#EBE5DC]/80 pt-3 z-10">
                     <span>訊號連線強度: 優良 (98%)</span>
                     <span>更新時間: {new Date().toLocaleTimeString()}</span>
                   </div>
@@ -293,37 +519,72 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           </div>
         </section>
 
-        {/* E-Commerce App Store Section */}
-        <section id="apps-store" className="max-w-7xl mx-auto px-6 py-20">
+        {/* E-Commerce App Store Section & Columns layout configuration */}
+        <section
+          id="apps-store"
+          className={`max-w-7xl mx-auto px-6 py-20 ${isDev ? "hover:outline hover:outline-dashed hover:outline-1 hover:outline-[#8B5E3C]/30 hover:outline-offset-4 rounded-2xl" : ""}`}
+        >
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C221E] tracking-wide">
-                <EditableField
-                  value={pageTexts.storeTitle}
-                  onSave={(val) => handleSaveText("storeTitle", val)}
-                />
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                openInspector("storeTitle", "text", "商城大標題", pageTexts.storeTitle, textColors.storeTitleColor);
+              }}
+              className={`block ${editableStyle("商城標題")}`}
+              title={isDev ? "點選編輯標題與文字顏色" : undefined}
+            >
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-wide" style={{ color: textColors.storeTitleColor }}>
+                {pageTexts.storeTitle}
               </h2>
-              <div className="text-xs md:text-sm text-[#6A5A53] mt-2 font-semibold">
-                <EditableField
-                  value={pageTexts.storeDesc}
-                  onSave={(val) => handleSaveText("storeDesc", val)}
-                />
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInspector("storeDesc", "text", "商城說明文字", pageTexts.storeDesc, textColors.storeDescColor);
+                }}
+                className={`text-xs md:text-sm mt-2 font-semibold block ${editableStyle("商城說明")}`}
+                style={{ color: textColors.storeDescColor }}
+                title={isDev ? "點選編輯商城說明與文字顏色" : undefined}
+              >
+                {pageTexts.storeDesc}
               </div>
             </div>
 
-            {/* Sorting Dropdown */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-[#8A7A72] font-bold">排序方式</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-white text-xs text-[#6A5A53] border border-[#EBE5DC] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#8B5E3C] transition-colors shadow-sm"
-              >
-                <option value="popular">最受歡迎</option>
-                <option value="rating">最高評分</option>
-                <option value="price-asc">價格：由低到高</option>
-                <option value="price-desc">價格：由高到低</option>
-              </select>
+            {/* Layout edit & Sorting Dropdown */}
+            <div className="flex flex-wrap items-center gap-4">
+              
+              {/* Columns Inspector Button */}
+              {isDev && (
+                <button
+                  onClick={() =>
+                    openInspector(
+                      "gridColumns",
+                      "layout",
+                      "App 網格排版欄數",
+                      layoutConfigs.gridColumns,
+                      undefined,
+                      "gridColumns"
+                    )
+                  }
+                  className="bg-white border border-[#EBE5DC] text-[#2C221E] hover:text-[#8B5E3C] hover:border-[#8B5E3C]/30 text-xs font-bold px-3 py-2.5 rounded-xl shadow-sm transition-all hover:scale-105"
+                  title="調整排版欄位數"
+                >
+                  📐 排版欄位 ({layoutConfigs.gridColumns} 欄)
+                </button>
+              )}
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#8A7A72] font-bold">排序</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-white text-xs text-[#6A5A53] border border-[#EBE5DC] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#8B5E3C] transition-colors shadow-sm"
+                >
+                  <option value="popular">最受歡迎</option>
+                  <option value="rating">最高評分</option>
+                  <option value="price-asc">價格：由低到高</option>
+                  <option value="price-desc">價格：由高到低</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -346,9 +607,17 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
             </div>
           </div>
 
-          {/* Apps Grid */}
+          {/* Apps Dynamic Grid Layout */}
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              className={`grid transition-all duration-300 ${
+                layoutConfigs.gridColumns === "2"
+                  ? "grid-cols-1 md:grid-cols-2"
+                  : layoutConfigs.gridColumns === "4"
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+              } ${layoutConfigs.gridGap}`}
+            >
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -357,7 +626,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                     setActiveProduct(p);
                     setActiveModalTab("overview");
                   }}
-                  onUpdateProduct={handleUpdateProduct}
+                  onEditClick={setActiveEditConfig}
                 />
               ))}
             </div>
@@ -372,22 +641,39 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           )}
         </section>
 
-        {/* Feature / Ecosystem Section */}
-        <section id="solutions" className="bg-[#F3EFE9]/40 border-y border-[#EBE5DC] py-20 px-6">
+        {/* Feature / Ecosystem Section with Background configurations */}
+        <section
+          id="solutions"
+          onClick={() =>
+            openInspector("ecosystemBg", "layout", "生態系背景與間距", layoutConfigs.ecosystemBg, undefined, "ecosystemBg")
+          }
+          className={`border-y border-[#EBE5DC] py-20 px-6 transition-colors duration-300 ${
+            layoutConfigs.ecosystemBg
+          } ${editableStyle("生態系區塊", "hover:outline-[#8B5E3C]/40 hover:outline-offset-[-4px]")}`}
+          title={isDev ? "點選調整區塊背景顏色" : undefined}
+        >
           <div className="max-w-7xl mx-auto">
-            <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C221E]">
-                <EditableField
-                  value={pageTexts.ecosystemTitle}
-                  onSave={(val) => handleSaveText("ecosystemTitle", val)}
-                />
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                openInspector("ecosystemTitle", "text", "生態系大標題", pageTexts.ecosystemTitle, textColors.ecosystemTitleColor);
+              }}
+              className={`text-center max-w-2xl mx-auto mb-16 space-y-3 block ${editableStyle("生態系標題")}`}
+              title={isDev ? "點選編輯標題與顏色" : undefined}
+            >
+              <h2 className="text-2xl md:text-3xl font-extrabold" style={{ color: textColors.ecosystemTitleColor }}>
+                {pageTexts.ecosystemTitle}
               </h2>
-              <div className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
-                <EditableField
-                  as="p"
-                  value={pageTexts.ecosystemDesc}
-                  onSave={(val) => handleSaveText("ecosystemDesc", val)}
-                />
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openInspector("ecosystemDesc", "text", "生態系說明文字", pageTexts.ecosystemDesc, textColors.ecosystemDescColor);
+                }}
+                className={`text-xs md:text-sm leading-relaxed font-semibold block ${editableStyle("生態系說明")}`}
+                style={{ color: textColors.ecosystemDescColor }}
+                title={isDev ? "點選編輯說明與顏色" : undefined}
+              >
+                {pageTexts.ecosystemDesc}
               </div>
             </div>
 
@@ -421,22 +707,31 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   ),
                 },
               ].map((feat, index) => (
-                <div key={index} className="bg-white border border-[#EBE5DC] rounded-2xl p-6 space-y-4 hover:border-[#8B5E3C]/20 transition-all duration-300 shadow-sm">
+                <div key={index} className="bg-white border border-[#EBE5DC] rounded-2xl p-6 space-y-4 hover:border-[#8B5E3C]/20 transition-all duration-300 shadow-sm z-10">
                   <div className="w-12 h-12 rounded-xl bg-[#FAF6F0] border border-[#EBE5DC] flex items-center justify-center">
                     {feat.icon}
                   </div>
                   <h3 className="text-[#2C221E] font-extrabold text-base">
-                    <EditableField
-                      value={pageTexts[feat.titleKey]}
-                      onSave={(val) => handleSaveText(feat.titleKey, val)}
-                    />
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openInspector(feat.titleKey, "text", "特點標題", pageTexts[feat.titleKey]);
+                      }}
+                      className={`block ${editableStyle("特點標題")}`}
+                    >
+                      {pageTexts[feat.titleKey]}
+                    </span>
                   </h3>
                   <div className="text-xs text-[#6A5A53] leading-relaxed">
-                    <EditableField
-                      as="p"
-                      value={pageTexts[feat.descKey]}
-                      onSave={(val) => handleSaveText(feat.descKey, val)}
-                    />
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openInspector(feat.descKey, "text", "特點描述", pageTexts[feat.descKey]);
+                      }}
+                      className={`block ${editableStyle("特點描述")}`}
+                    >
+                      {pageTexts[feat.descKey]}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -444,24 +739,49 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           </div>
         </section>
 
-        {/* Developer Portal Section */}
-        <section id="developer" className="max-w-7xl mx-auto px-6 py-24 text-center relative overflow-hidden">
+        {/* Developer Portal Section & Spacing layout configuration */}
+        <section
+          id="developer"
+          onClick={() =>
+            openInspector("devPadding", "layout", "開發者區塊間距", layoutConfigs.devPadding, undefined, "devPadding")
+          }
+          className={`relative overflow-hidden ${
+            layoutConfigs.devPadding === "py-16"
+              ? "py-16"
+              : layoutConfigs.devPadding === "py-32"
+              ? "py-32"
+              : "py-24"
+          } ${editableStyle("開發者區塊", "hover:outline-[#FAF6F0] hover:outline-offset-[-4px]")}`}
+          title={isDev ? "點選調整開發者區塊間距" : undefined}
+        >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[#8B5E3C]/3 to-[#D9A05B]/3 blur-[120px] rounded-full pointer-events-none" />
           
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#2C221E]">
-              <EditableField
-                value={pageTexts.devTitle}
-                onSave={(val) => handleSaveText("devTitle", val)}
-              />
-            </h2>
-            <div className="text-xs md:text-sm text-[#6A5A53] leading-relaxed font-semibold">
-              <EditableField
-                as="p"
-                value={pageTexts.devDesc}
-                onSave={(val) => handleSaveText("devDesc", val)}
-              />
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                openInspector("devTitle", "text", "開發者標題", pageTexts.devTitle, textColors.devTitleColor);
+              }}
+              className={`block ${editableStyle("開發者標題")}`}
+              title={isDev ? "點選編輯標題與顏色" : undefined}
+            >
+              <h2 className="text-3xl md:text-4xl font-extrabold" style={{ color: textColors.devTitleColor }}>
+                {pageTexts.devTitle}
+              </h2>
             </div>
+
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                openInspector("devDesc", "text", "開發者說明文字", pageTexts.devDesc, textColors.devDescColor);
+              }}
+              className={`text-xs md:text-sm leading-relaxed font-semibold block ${editableStyle("開發者說明")}`}
+              style={{ color: textColors.devDescColor }}
+              title={isDev ? "點選編輯說明與顏色" : undefined}
+            >
+              {pageTexts.devDesc}
+            </div>
+
             <div className="pt-4 flex justify-center gap-4">
               <button className="bg-gradient-to-r from-[#8B5E3C] to-[#C8B195] hover:from-[#724C30] hover:to-[#B69F83] text-white font-extrabold px-6 py-3 rounded-xl text-xs tracking-wide transition-all shadow-md active:scale-98">
                 獲取開發者金鑰 (SDK)
@@ -488,12 +808,24 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           />
 
           {/* Modal Container */}
-          <div className="relative w-full max-w-3xl bg-white border border-[#EBE5DC] rounded-2xl shadow-2xl my-8 overflow-hidden z-10 animate-scaleUp max-h-[85vh] flex flex-col justify-between">
+          <div className="relative w-full max-w-3xl bg-white border border-[#EBE5DC] rounded-2xl shadow-2xl my-8 overflow-hidden z-10 animate-scaleUp max-h-[85vh] flex flex-col justify-between text-xs">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between p-6 border-b border-[#EBE5DC] bg-[#FAF6F0]/50">
               <div className="flex gap-4">
-                <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white border border-[#EBE5DC]">
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openInspector(
+                      String(activeProduct.id),
+                      "image",
+                      `${activeProduct.name} 圖示`,
+                      activeProduct.images[0]?.src || ""
+                    );
+                  }}
+                  className={`relative w-16 h-16 rounded-2xl overflow-hidden bg-white border border-[#EBE5DC] ${editableStyle("圖示")}`}
+                  title={isDev ? "點選更換圖示" : undefined}
+                >
                   <Image
                     src={activeProduct.images[0]?.src || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80"}
                     alt={activeProduct.name}
@@ -503,56 +835,43 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
                   />
                 </div>
                 <div>
-                  <h3 className="text-[#2C221E] font-extrabold text-lg leading-snug">
-                    <EditableField
-                      value={activeProduct.name}
-                      onSave={(newVal) => handleUpdateProduct(activeProduct.id, { name: newVal })}
-                    />
+                  <h3
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openInspector(String(activeProduct.id), "product", "名稱", activeProduct.name, undefined, "name");
+                    }}
+                    className={`text-[#2C221E] font-extrabold text-lg leading-snug ${editableStyle("App名稱")}`}
+                    title={isDev ? "點選編輯名稱" : undefined}
+                  >
+                    {activeProduct.name}
                   </h3>
                   <div className="flex items-center gap-2.5 mt-1 text-[11px] text-[#6A5A53]">
-                    <span className="text-[#8B5E3C] font-extrabold">
-                      <EditableField
-                        value={activeProduct.categories[0]?.name || "智慧工具"}
-                        onSave={(newCatVal) =>
-                          handleUpdateProduct(activeProduct.id, {
-                            categories: [{ id: activeProduct.categories[0]?.id || 1, name: newCatVal }]
-                          })
-                        }
-                      />
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openInspector(
+                          String(activeProduct.id),
+                          "product",
+                          "分類標籤",
+                          activeProduct.categories[0]?.name || "智慧工具",
+                          undefined,
+                          "category"
+                        );
+                      }}
+                      className={`text-[#8B5E3C] font-extrabold ${editableStyle("App分類")}`}
+                      title={isDev ? "點選編輯分類" : undefined}
+                    >
+                      {activeProduct.categories[0]?.name || "智慧工具"}
                     </span>
                     <span>•</span>
                     <span className="flex items-center text-amber-500 gap-0.5">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
-                      <EditableField
-                        value={activeProduct.meta_data?.find((m) => m.key === "_app_rating")?.value || "4.8"}
-                        onSave={(newVal) => {
-                          const updatedMeta = (activeProduct.meta_data || []).map((m) =>
-                            m.key === "_app_rating" ? { ...m, value: newVal } : m
-                          );
-                          if (!updatedMeta.some((m) => m.key === "_app_rating")) {
-                            updatedMeta.push({ key: "_app_rating", value: newVal });
-                          }
-                          handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
-                        }}
-                      />
+                      {activeProduct.meta_data?.find((m) => m.key === "_app_rating")?.value || "4.8"}
                     </span>
                     <span>•</span>
-                    <span>
-                      <EditableField
-                        value={activeProduct.meta_data?.find((m) => m.key === "_app_downloads")?.value || "1.5k"}
-                        onSave={(newVal) => {
-                          const updatedMeta = (activeProduct.meta_data || []).map((m) =>
-                            m.key === "_app_downloads" ? { ...m, value: newVal } : m
-                          );
-                          if (!updatedMeta.some((m) => m.key === "_app_downloads")) {
-                            updatedMeta.push({ key: "_app_downloads", value: newVal });
-                          }
-                          handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
-                        }}
-                      /> 下載
-                    </span>
+                    <span>{activeProduct.meta_data?.find((m) => m.key === "_app_downloads")?.value || "1.5k+"} 下載</span>
                   </div>
                 </div>
               </div>
@@ -613,17 +932,29 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
 
                   {/* Rich description */}
                   <div className="space-y-4 text-xs leading-relaxed text-[#6A5A53]">
-                    <h4 className="text-[#2C221E] font-extrabold text-sm">核心特點與價值 (可編輯內容)</h4>
-                    <div className="bg-[#FAF6F0]/20 p-4 border border-[#EBE5DC]/50 rounded-2xl">
-                      <EditableField
-                        as="div"
-                        value={
-                          activeProduct.description
-                            ? activeProduct.description.replace(/<[^>]*>/g, "")
-                            : "此軟體針對水產供應鏈提供全面數位化支持，具備流暢的使用介面、毫秒級的物聯網監控延遲、與可靠的安全區塊鏈認證。能有效解決海鮮追蹤、冷鏈控溫與即時水質預測痛點，最大化降低水產養殖的損失率。"
-                        }
-                        onSave={(newDesc) => handleUpdateProduct(activeProduct.id, { description: newDesc })}
-                        className="leading-relaxed block"
+                    <h4 className="text-[#2C221E] font-extrabold text-sm">核心特點與價值</h4>
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openInspector(
+                          String(activeProduct.id),
+                          "product",
+                          "詳細描述",
+                          activeProduct.description ? activeProduct.description.replace(/<[^>]*>/g, "") : "",
+                          undefined,
+                          "description"
+                        );
+                      }}
+                      className={`bg-[#FAF6F0]/20 p-4 border border-[#EBE5DC]/50 rounded-2xl block leading-relaxed ${editableStyle("描述內容")}`}
+                      title={isDev ? "點選修改詳細描述" : undefined}
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            activeProduct.description ||
+                            "<p>此軟體針對水產供應鏈提供全面數位化支持，具備流暢的使用介面、毫秒級的物聯網監控延遲、與可靠的安全區塊鏈認證。能有效解決海鮮追蹤、冷鏈控溫與即時水質預測痛點，最大化降低水產養殖的損失率。</p>",
+                        }}
+                        className="prose prose-stone prose-xs text-[#6A5A53] max-w-none prose-headings:text-[#2C221E] prose-p:leading-relaxed"
                       />
                     </div>
 
@@ -681,57 +1012,16 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
               {activeModalTab === "specs" && (
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   {[
-                    {
-                      label: "軟體支援平台",
-                      val: activeProduct.meta_data?.find((m) => m.key === "_app_platforms")?.value || "Web, iOS, Android",
-                      key: "_app_platforms",
-                    },
-                    {
-                      label: "版本號碼",
-                      val: activeProduct.meta_data?.find((m) => m.key === "_app_version")?.value || "v2.1.0",
-                      key: "_app_version",
-                    },
-                    {
-                      label: "授權類型",
-                      val: parseFloat(activeProduct.price) === 0 ? "免費授權" : "付費訂閱制 / 買斷授權",
-                      key: null,
-                    },
-                    {
-                      label: "最低系統需求",
-                      val: "iOS 15.0+ / Android 9.0+ / Chrome 100+ 瀏覽器",
-                      key: null,
-                    },
-                    {
-                      label: "物聯網通訊協定",
-                      val: "MQTT, HTTP REST API, Modbus TCP",
-                      key: null,
-                    },
-                    {
-                      label: "網路需求",
-                      val: "具備 4G/5G 或 Wi-Fi 網路連線能力 (離線模式支援最長 48 小時數據暫存)",
-                      key: null,
-                    },
+                    { label: "軟體支援平台", val: activeProduct.meta_data?.find((m) => m.key === "_app_platforms")?.value || "Web, iOS, Android" },
+                    { label: "版本號碼", val: activeProduct.meta_data?.find((m) => m.key === "_app_version")?.value || "v2.1.0" },
+                    { label: "授權類型", val: parseFloat(activeProduct.price) === 0 ? "免費授權" : "付費訂閱制 / 買斷授權" },
+                    { label: "最低系統需求", val: "iOS 15.0+ / Android 9.0+ / Chrome 100+ 瀏覽器" },
+                    { label: "物聯網通訊協定", val: "MQTT, HTTP REST API, Modbus TCP" },
+                    { label: "網路需求", val: "具備 4G/5G 或 Wi-Fi 網路連線能力 (離線模式支援最長 48 小時數據暫存)" },
                   ].map((spec, idx) => (
                     <div key={idx} className="bg-[#FAF6F0]/60 p-3 rounded-xl border border-[#EBE5DC]/60">
                       <div className="text-[#8A7A72] mb-1 font-semibold">{spec.label}</div>
-                      <div className="text-[#2C221E] font-bold">
-                        {spec.key ? (
-                          <EditableField
-                            value={spec.val}
-                            onSave={(newVal) => {
-                              const updatedMeta = (activeProduct.meta_data || []).map((m) =>
-                                m.key === spec.key ? { ...m, value: newVal } : m
-                              );
-                              if (!updatedMeta.some((m) => m.key === spec.key)) {
-                                updatedMeta.push({ key: spec.key, value: newVal });
-                              }
-                              handleUpdateProduct(activeProduct.id, { meta_data: updatedMeta });
-                            }}
-                          />
-                        ) : (
-                          spec.val
-                        )}
-                      </div>
+                      <div className="text-[#2C221E] font-bold">{spec.val}</div>
                     </div>
                   ))}
                 </div>
@@ -739,7 +1029,7 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-[#EBE5DC] bg-[#FAF6F0]/50 flex items-center justify-between">
+            <div className="p-6 border-t border-[#EBE5DC] bg-[#FAF6F0]/50 flex items-center justify-between text-xs">
               <div>
                 <span className="text-xs text-[#8A7A72] font-bold">軟體授權費用</span>
                 <div className="text-[#2C221E] font-extrabold text-lg mt-0.5">
@@ -789,6 +1079,15 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
 
           </div>
         </div>
+      )}
+
+      {/* Visual Inspector Dialog Box */}
+      {isDev && activeEditConfig && (
+        <VisualInspectorModal
+          activeConfig={activeEditConfig}
+          onSave={handleInspectorSave}
+          onClose={() => setActiveEditConfig(null)}
+        />
       )}
 
     </div>
