@@ -18,7 +18,6 @@ export interface WooCommerceProduct {
   description?: string;
   short_description?: string;
   categories: { id: number; name: string }[];
-  // Custom metadata for fish e-commerce (e.g., origin, weight)
   meta_data?: {
     key: string;
     value: string;
@@ -27,152 +26,157 @@ export interface WooCommerceProduct {
 
 interface ProductCardProps {
   product: WooCommerceProduct;
+  onOpenDetails?: (product: WooCommerceProduct) => void;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+export default function ProductCard({ product, onOpenDetails }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
 
-  const mainImage = product.images[0]?.src || "/vercel.svg";
+  const mainImage = product.images[0]?.src || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80";
   const altText = product.images[0]?.alt || product.name;
 
-  // Extract custom meta
-  const weight = product.meta_data?.find((m) => m.key === "_weight_spec")?.value || "500g ± 10%";
-  const origin = product.meta_data?.find((m) => m.key === "_origin_loc")?.value || "台灣基隆";
-  const catchTime = product.meta_data?.find((m) => m.key === "_catch_time")?.value || "今日清晨";
+  // Extract meta data or provide default mock values for App selling
+  const version = product.meta_data?.find((m) => m.key === "_app_version")?.value || "v1.3.2";
+  const rating = product.meta_data?.find((m) => m.key === "_app_rating")?.value || 
+    (4.5 + (product.id % 5) * 0.1).toFixed(1);
+  const downloads = product.meta_data?.find((m) => m.key === "_app_downloads")?.value || 
+    (((product.id % 4) + 1) * 1.5).toFixed(1) + "k+";
+  const platformsStr = product.meta_data?.find((m) => m.key === "_app_platforms")?.value || "Web, iOS, Android";
+  const platforms = platformsStr.split(",").map((p) => p.trim());
 
-  const onSale = product.sale_price !== "";
-  const discountPercent = onSale
-    ? Math.round(
-        ((parseFloat(product.regular_price) - parseFloat(product.sale_price)) /
-          parseFloat(product.regular_price)) *
-          100
-      )
-    : 0;
+  const onSale = product.sale_price !== "" && product.sale_price !== product.regular_price;
+  const isFree = parseFloat(product.price) === 0 || product.price === "";
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
 
   return (
     <div
-      className="group relative bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onOpenDetails && onOpenDetails(product)}
+      className="group relative bg-gray-900/50 hover:bg-gray-900/90 rounded-2xl p-5 border border-gray-800/80 hover:border-cyan-500/30 transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-cyan-950/10 flex flex-col justify-between h-full cursor-pointer overflow-hidden"
     >
-      {/* Product Image & Badges */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-50">
-        <Image
-          src={mainImage}
-          alt={altText}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-          priority={false}
-        />
-        
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          <span className="bg-[#0B192C] text-white text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
-            {catchTime}
-          </span>
-          {onSale && (
-            <span className="bg-[#FF6B35] text-white text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-              折 {discountPercent}%
+      {/* Glow Effect on Hover */}
+      <div className="absolute -inset-px bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl pointer-events-none" />
+
+      <div>
+        {/* Top: Icon + Title + Rating */}
+        <div className="flex gap-4 items-start mb-4">
+          <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-850 flex-shrink-0 border border-gray-800/80 group-hover:border-cyan-500/20 transition-colors duration-300">
+            <Image
+              src={mainImage}
+              alt={altText}
+              fill
+              sizes="64px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            {/* Categories */}
+            <div className="text-[10px] text-cyan-400 font-bold tracking-wider uppercase mb-1 line-clamp-1">
+              {product.categories[0]?.name || "智慧工具"}
+            </div>
+            {/* Title */}
+            <h3 className="text-white font-extrabold text-sm leading-snug group-hover:text-cyan-300 transition-colors duration-200 truncate">
+              {product.name}
+            </h3>
+            {/* Meta: Rating & Downloads */}
+            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-gray-400">
+              <span className="flex items-center text-amber-400 gap-0.5">
+                <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                {rating}
+              </span>
+              <span className="text-gray-600">•</span>
+              <span>{downloads} 下載</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Short Description */}
+        <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-4 group-hover:text-gray-300 transition-colors">
+          {product.short_description
+            ? product.short_description.replace(/<[^>]*>/g, "")
+            : "為智慧漁業開發的專業雲端運算與數據視覺化應用，完美整合硬體數據與雲端分析。"}
+        </p>
+
+        {/* Platforms & Version */}
+        <div className="flex items-center justify-between border-t border-gray-900 pt-3.5 mb-4 text-[10px] text-gray-500">
+          <div className="flex items-center gap-1.5">
+            {platforms.map((plat) => (
+              <span
+                key={plat}
+                className="bg-gray-900 border border-gray-800 text-gray-400 px-1.5 py-0.5 rounded font-mono"
+              >
+                {plat}
+              </span>
+            ))}
+          </div>
+          <span className="font-mono text-gray-600">{version}</span>
+        </div>
+      </div>
+
+      {/* Bottom: Price and Download/Add Actions */}
+      <div className="flex items-center justify-between border-t border-gray-900/50 pt-3.5">
+        {/* Price */}
+        <div className="flex flex-col">
+          {isFree ? (
+            <span className="text-emerald-400 font-extrabold text-sm tracking-wide">免費取得</span>
+          ) : onSale ? (
+            <div className="flex flex-col">
+              <span className="text-white font-extrabold text-sm leading-none">
+                NT$ {parseFloat(product.price).toLocaleString()}
+              </span>
+              <span className="text-gray-500 line-through text-[10px] mt-0.5">
+                NT$ {parseFloat(product.regular_price).toLocaleString()}
+              </span>
+            </div>
+          ) : (
+            <span className="text-white font-extrabold text-sm">
+              NT$ {parseFloat(product.price).toLocaleString()}
             </span>
           )}
         </div>
 
-        {/* Stock status overlay */}
-        {product.stock_status !== "instock" && (
-          <div className="absolute inset-0 bg-[#0B192C]/75 backdrop-blur-[2px] flex items-center justify-center z-10">
-            <span className="text-white font-bold tracking-widest text-lg px-4 py-2 border-2 border-white/60 rounded">
-              已售完
-            </span>
-          </div>
-        )}
-      </div>
+        {/* Actions Button */}
+        <div className="flex items-center gap-2">
+          {/* Details CTA */}
+          <button
+            type="button"
+            className="px-3 py-1.5 rounded-lg border border-gray-800 text-gray-400 hover:text-white hover:border-gray-700 text-xs font-semibold tracking-wide transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDetails && onOpenDetails(product);
+            }}
+          >
+            詳情
+          </button>
 
-      {/* Product Information */}
-      <div className="p-5 flex flex-col flex-grow">
-        {/* Category & Tags */}
-        <div className="flex items-center gap-2 mb-2">
-          {product.categories.slice(0, 1).map((cat) => (
-            <span key={cat.id} className="text-[#FF6B35] text-xs font-semibold tracking-wider">
-              {cat.name}
-            </span>
-          ))}
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-          <span className="text-gray-500 text-xs">{origin}</span>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-[#0B192C] font-bold text-lg mb-2 line-clamp-1 group-hover:text-[#FF6B35] transition-colors duration-200">
-          {product.name}
-        </h3>
-
-        {/* Spec Information */}
-        <div className="grid grid-cols-2 gap-y-1 gap-x-2 text-xs text-gray-500 mb-4 border-b border-gray-100 pb-3">
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-            </svg>
-            <span>規格: {weight}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>低溫冷鏈配送</span>
-          </div>
-        </div>
-
-        {/* Price & Cart Action */}
-        <div className="flex items-center justify-between mt-auto pt-2">
-          <div className="flex flex-col">
-            {onSale ? (
-              <>
-                <span className="text-[#FF6B35] font-extrabold text-xl">
-                  NT$ {parseFloat(product.price).toLocaleString()}
-                </span>
-                <span className="text-gray-400 line-through text-xs">
-                  NT$ {parseFloat(product.regular_price).toLocaleString()}
-                </span>
-              </>
-            ) : (
-              <span className="text-[#0B192C] font-extrabold text-xl">
-                NT$ {parseFloat(product.price).toLocaleString()}
-              </span>
-            )}
-          </div>
-
+          {/* Add to Cart CTA */}
           <button
             onClick={handleAddToCart}
             disabled={product.stock_status !== "instock"}
-            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+            className={`flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-300 ${
               product.stock_status !== "instock"
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                ? "bg-gray-950 text-gray-600 cursor-not-allowed border border-gray-900"
                 : isAdded
-                ? "bg-green-600 text-white"
-                : "bg-[#FF6B35] text-white hover:bg-[#e05621] hover:shadow-md active:scale-95"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                : "bg-cyan-500 hover:bg-cyan-600 text-gray-950 hover:shadow-md hover:shadow-cyan-500/10 active:scale-95"
             }`}
           >
             {isAdded ? (
               <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>已加入</span>
+                <span>已取得</span>
               </>
             ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span>加入購物車</span>
-              </>
+              <span>取得</span>
             )}
           </button>
         </div>

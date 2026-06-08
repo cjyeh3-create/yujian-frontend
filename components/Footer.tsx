@@ -1,43 +1,64 @@
 export default function Footer() {
   return (
-    <footer className="bg-[#0B192C] text-gray-400 border-t border-gray-800">
+    <footer className="bg-gray-950 text-gray-400 border-t border-gray-900/80">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* Brand Info */}
         <div className="space-y-4">
-          <a href="#" className="flex items-center gap-2">
-            <svg
-              className="w-8 h-8 text-[#FF6B35]"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-            </svg>
-            <span className="text-xl font-bold tracking-wider text-white">
-              漁見 <span className="text-[#FF6B35]">Yujian</span>
+          <a href="#" className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 shadow-md shadow-cyan-500/20">
+              <svg
+                className="w-4.5 h-4.5 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.813 15.904L9 21L14.907 18M18 10.5c0 3.29-2.29 6-5.5 6s-5.5-2.71-5.5-6s2.29-6 5.5-6s5.5 2.71 5.5 6z"
+                />
+              </svg>
+            </div>
+            <span className="text-lg font-extrabold tracking-wider text-white">
+              漁見 <span className="text-cyan-400">App Hub</span>
             </span>
           </a>
-          <p className="text-sm leading-relaxed text-gray-400">
-            從深海，到您的餐桌。<br />
-            今日現撈，低溫直送。我們秉持對海洋的敬畏，將最純淨、最鮮美的滋味原封不動呈獻給您。
+          <p className="text-xs leading-relaxed text-gray-400">
+            引領智慧海洋新視界。<br />
+            我們透過物聯網 (IoT)、人工智慧 (AI) 與大數據預測，為遠洋捕撈與智慧養殖提供最頂尖的數位應用軟體與 SaaS 解決方案。
           </p>
+          <div className="flex items-center gap-3 pt-2">
+            {["github", "twitter", "linkedin"].map((item) => (
+              <a
+                key={item}
+                href="#"
+                className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all duration-300"
+              >
+                <span className="sr-only">{item}</span>
+                <span className="text-xs font-semibold capitalize">{item[0]}</span>
+              </a>
+            ))}
+          </div>
         </div>
 
         {/* Quick Links */}
         <div>
-          <h3 className="text-white font-semibold mb-4 text-sm tracking-widest uppercase">
-            探索漁獲
+          <h3 className="text-white font-bold mb-4 text-xs tracking-wider uppercase">
+            智慧應用分類
           </h3>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-xs">
             {[
-              { label: "今日推薦現撈", href: "#today-catch" },
-              { label: "急速冷凍專區", href: "#" },
-              { label: "禮盒與嚴選", href: "#" },
-              { label: "安心產銷履歷", href: "#" },
+              { label: "AI 影像與監控助手", href: "#" },
+              { label: "水質物聯網監控", href: "#" },
+              { label: "海洋氣象與航路預測", href: "#" },
+              { label: "產銷履歷區塊鏈系統", href: "#" },
+              { label: "漁場進銷存管理 ERP", href: "#" },
             ].map((link) => (
               <li key={link.label}>
                 <a
                   href={link.href}
-                  className="hover:text-[#FF6B35] transition-colors duration-200"
+                  className="hover:text-cyan-400 transition-colors duration-200"
                 >
                   {link.label}
                 </a>
@@ -46,22 +67,23 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Customer Service */}
+        {/* Developer / Docs */}
         <div>
-          <h3 className="text-white font-semibold mb-4 text-sm tracking-widest uppercase">
-            顧客服務
+          <h3 className="text-white font-bold mb-4 text-xs tracking-wider uppercase">
+            開發者中心
           </h3>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-xs">
             {[
-              { label: "配送與運費政策", href: "#" },
-              { label: "退換貨細則", href: "#" },
-              { label: "常見問題 FAQ", href: "#" },
-              { label: "會員權益說明", href: "#" },
+              { label: "API 參考文件", href: "#" },
+              { label: "物聯網 SDK 下載", href: "#" },
+              { label: "開源專案與範例", href: "#" },
+              { label: "開發者沙盒測試 (Sandbox)", href: "#" },
+              { label: "應用上架申請與條款", href: "#" },
             ].map((link) => (
               <li key={link.label}>
                 <a
                   href={link.href}
-                  className="hover:text-[#FF6B35] transition-colors duration-200"
+                  className="hover:text-cyan-400 transition-colors duration-200"
                 >
                   {link.label}
                 </a>
@@ -71,28 +93,28 @@ export default function Footer() {
         </div>
 
         {/* Contact Info */}
-        <div className="space-y-3 text-sm">
-          <h3 className="text-white font-semibold text-sm tracking-widest uppercase">
-            聯絡我們
+        <div className="space-y-3 text-xs">
+          <h3 className="text-white font-bold text-xs tracking-wider uppercase">
+            技術支援與聯絡
           </h3>
           <p className="flex items-center gap-2">
-            <span className="text-[#FF6B35]">電話:</span> (02) 2345-6789
+            <span className="text-cyan-400 font-semibold">合作專線:</span> (02) 2720-8889
           </p>
           <p className="flex items-center gap-2">
-            <span className="text-[#FF6B35]">信箱:</span> support@yujianseafood.com
+            <span className="text-cyan-400 font-semibold">支援信箱:</span> dev-support@yujian.io
           </p>
           <p className="flex items-center gap-2">
-            <span className="text-[#FF6B35]">地址:</span> 宜蘭縣蘇澳鎮漁港路 88 號
+            <span className="text-cyan-400 font-semibold">總部地址:</span> 台北市信義區信義路五段 7 號 (台北 101 大樓 88 樓)
           </p>
-          <p className="flex items-center gap-2 text-gray-500">
-            <span>營業時間: 週一至週六 08:00 - 18:00</span>
+          <p className="text-gray-500 pt-1 leading-normal">
+            服務時間: 週一至週五 09:00 - 18:00 (例假日及國定假日除外)
           </p>
         </div>
       </div>
 
-      <div className="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+      <div className="border-t border-gray-900 py-6 text-center text-[10px] text-gray-500">
         <p>
-          &copy; {new Date().getFullYear()} 漁見 Yujian. All rights reserved. 版權所有，轉載必究。
+          &copy; {new Date().getFullYear()} 漁見科技 Yujian Digital Tech. All rights reserved.
         </p>
       </div>
     </footer>
