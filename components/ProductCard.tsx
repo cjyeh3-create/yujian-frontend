@@ -57,15 +57,15 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
   return (
     <div
       onClick={() => onOpenDetails && onOpenDetails(product)}
-      className="group relative bg-gray-900/50 hover:bg-gray-900/90 rounded-2xl p-5 border border-gray-800/80 hover:border-cyan-500/30 transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-cyan-950/10 flex flex-col justify-between h-full cursor-pointer overflow-hidden"
+      className="group relative bg-white hover:bg-white rounded-2xl p-5 border border-[#EBE5DC] hover:border-[#8B5E3C]/35 transition-all duration-300 shadow-md shadow-amber-900/5 hover:shadow-xl hover:shadow-amber-900/10 flex flex-col justify-between h-full cursor-pointer overflow-hidden"
     >
-      {/* Glow Effect on Hover */}
-      <div className="absolute -inset-px bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl pointer-events-none" />
+      {/* Warm Latte Glow Effect on Hover */}
+      <div className="absolute -inset-px bg-gradient-to-r from-[#8B5E3C]/5 to-[#D9A05B]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl pointer-events-none" />
 
       <div>
         {/* Top: Icon + Title + Rating */}
         <div className="flex gap-4 items-start mb-4">
-          <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-850 flex-shrink-0 border border-gray-800/80 group-hover:border-cyan-500/20 transition-colors duration-300">
+          <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-[#FAF6F0] flex-shrink-0 border border-[#EBE5DC] group-hover:border-[#8B5E3C]/20 transition-colors duration-300">
             <Image
               src={mainImage}
               alt={altText}
@@ -76,67 +76,67 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
           </div>
           <div className="flex-1 min-w-0">
             {/* Categories */}
-            <div className="text-[10px] text-cyan-400 font-bold tracking-wider uppercase mb-1 line-clamp-1">
+            <div className="text-[10px] text-[#8B5E3C] font-extrabold tracking-wider uppercase mb-1 line-clamp-1">
               {product.categories[0]?.name || "智慧工具"}
             </div>
             {/* Title */}
-            <h3 className="text-white font-extrabold text-sm leading-snug group-hover:text-cyan-300 transition-colors duration-200 truncate">
+            <h3 className="text-[#2C221E] font-extrabold text-sm leading-snug group-hover:text-[#8B5E3C] transition-colors duration-200 truncate">
               {product.name}
             </h3>
             {/* Meta: Rating & Downloads */}
-            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-gray-400">
-              <span className="flex items-center text-amber-400 gap-0.5">
+            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-[#6A5A53]">
+              <span className="flex items-center text-amber-500 gap-0.5">
                 <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 {rating}
               </span>
-              <span className="text-gray-600">•</span>
+              <span className="text-[#EBE5DC]">•</span>
               <span>{downloads} 下載</span>
             </div>
           </div>
         </div>
 
         {/* Short Description */}
-        <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-4 group-hover:text-gray-300 transition-colors">
+        <p className="text-xs text-[#6A5A53] leading-relaxed line-clamp-2 mb-4 group-hover:text-[#4A3D36] transition-colors">
           {product.short_description
             ? product.short_description.replace(/<[^>]*>/g, "")
             : "為智慧漁業開發的專業雲端運算與數據視覺化應用，完美整合硬體數據與雲端分析。"}
         </p>
 
         {/* Platforms & Version */}
-        <div className="flex items-center justify-between border-t border-gray-900 pt-3.5 mb-4 text-[10px] text-gray-500">
+        <div className="flex items-center justify-between border-t border-[#FAF6F0] pt-3.5 mb-4 text-[10px] text-[#8A7A72]">
           <div className="flex items-center gap-1.5">
             {platforms.map((plat) => (
               <span
                 key={plat}
-                className="bg-gray-900 border border-gray-800 text-gray-400 px-1.5 py-0.5 rounded font-mono"
+                className="bg-[#FAF6F0] border border-[#EBE5DC] text-[#6A5A53] px-1.5 py-0.5 rounded font-mono"
               >
                 {plat}
               </span>
             ))}
           </div>
-          <span className="font-mono text-gray-600">{version}</span>
+          <span className="font-mono text-[#8A7A72]/70">{version}</span>
         </div>
       </div>
 
       {/* Bottom: Price and Download/Add Actions */}
-      <div className="flex items-center justify-between border-t border-gray-900/50 pt-3.5">
+      <div className="flex items-center justify-between border-t border-[#FAF6F0] pt-3.5">
         {/* Price */}
         <div className="flex flex-col">
           {isFree ? (
-            <span className="text-emerald-400 font-extrabold text-sm tracking-wide">免費取得</span>
+            <span className="text-[#52796F] font-extrabold text-sm tracking-wide">免費取得</span>
           ) : onSale ? (
             <div className="flex flex-col">
-              <span className="text-white font-extrabold text-sm leading-none">
+              <span className="text-[#8B5E3C] font-extrabold text-sm leading-none">
                 NT$ {parseFloat(product.price).toLocaleString()}
               </span>
-              <span className="text-gray-500 line-through text-[10px] mt-0.5">
+              <span className="text-[#8A7A72] line-through text-[10px] mt-0.5">
                 NT$ {parseFloat(product.regular_price).toLocaleString()}
               </span>
             </div>
           ) : (
-            <span className="text-white font-extrabold text-sm">
+            <span className="text-[#2C221E] font-extrabold text-sm">
               NT$ {parseFloat(product.price).toLocaleString()}
             </span>
           )}
@@ -147,7 +147,7 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
           {/* Details CTA */}
           <button
             type="button"
-            className="px-3 py-1.5 rounded-lg border border-gray-800 text-gray-400 hover:text-white hover:border-gray-700 text-xs font-semibold tracking-wide transition-all"
+            className="px-3 py-1.5 rounded-lg border border-[#EBE5DC] text-[#6A5A53] hover:text-[#2C221E] hover:border-[#8B5E3C]/30 text-xs font-bold tracking-wide transition-all"
             onClick={(e) => {
               e.stopPropagation();
               onOpenDetails && onOpenDetails(product);
@@ -162,10 +162,10 @@ export default function ProductCard({ product, onOpenDetails }: ProductCardProps
             disabled={product.stock_status !== "instock"}
             className={`flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-300 ${
               product.stock_status !== "instock"
-                ? "bg-gray-950 text-gray-600 cursor-not-allowed border border-gray-900"
+                ? "bg-[#FAF6F0] text-[#8A7A72] cursor-not-allowed border border-[#EBE5DC]"
                 : isAdded
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                : "bg-cyan-500 hover:bg-cyan-600 text-gray-950 hover:shadow-md hover:shadow-cyan-500/10 active:scale-95"
+                ? "bg-[#52796F] text-white shadow-md shadow-emerald-900/10"
+                : "bg-[#8B5E3C] hover:bg-[#724C30] text-white hover:shadow-md hover:shadow-amber-900/10 active:scale-95"
             }`}
           >
             {isAdded ? (

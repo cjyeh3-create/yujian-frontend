@@ -1,11 +1,11 @@
 export default function Footer() {
   return (
-    <footer className="bg-gray-950 text-gray-400 border-t border-gray-900/80">
+    <footer className="bg-[#F3EFE9] text-[#6A5A53] border-t border-[#EBE5DC]">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* Brand Info */}
         <div className="space-y-4">
           <a href="#" className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 shadow-md shadow-cyan-500/20">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-[#8B5E3C] to-[#D9A05B] shadow-md shadow-amber-900/10">
               <svg
                 className="w-4.5 h-4.5 text-white"
                 fill="none"
@@ -20,11 +20,11 @@ export default function Footer() {
                 />
               </svg>
             </div>
-            <span className="text-lg font-extrabold tracking-wider text-white">
-              漁見 <span className="text-cyan-400">App Hub</span>
+            <span className="text-lg font-extrabold tracking-wider text-[#2C221E]">
+              漁見 <span className="text-[#8B5E3C]">App Hub</span>
             </span>
           </a>
-          <p className="text-xs leading-relaxed text-gray-400">
+          <p className="text-xs leading-relaxed text-[#6A5A53]">
             引領智慧海洋新視界。<br />
             我們透過物聯網 (IoT)、人工智慧 (AI) 與大數據預測，為遠洋捕撈與智慧養殖提供最頂尖的數位應用軟體與 SaaS 解決方案。
           </p>
@@ -33,10 +33,10 @@ export default function Footer() {
               <a
                 key={item}
                 href="#"
-                className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all duration-300"
+                className="w-8 h-8 rounded-lg bg-white border border-[#EBE5DC] flex items-center justify-center text-[#6A5A53] hover:text-[#8B5E3C] hover:border-[#8B5E3C]/35 transition-all duration-300 shadow-sm"
               >
                 <span className="sr-only">{item}</span>
-                <span className="text-xs font-semibold capitalize">{item[0]}</span>
+                <span className="text-xs font-semibold capitalize font-mono">{item[0]}</span>
               </a>
             ))}
           </div>
@@ -44,7 +44,7 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h3 className="text-white font-bold mb-4 text-xs tracking-wider uppercase">
+          <h3 className="text-[#2C221E] font-bold mb-4 text-xs tracking-wider uppercase">
             智慧應用分類
           </h3>
           <ul className="space-y-2 text-xs">
@@ -58,7 +58,7 @@ export default function Footer() {
               <li key={link.label}>
                 <a
                   href={link.href}
-                  className="hover:text-cyan-400 transition-colors duration-200"
+                  className="hover:text-[#8B5E3C] transition-colors duration-200"
                 >
                   {link.label}
                 </a>
@@ -69,7 +69,7 @@ export default function Footer() {
 
         {/* Developer / Docs */}
         <div>
-          <h3 className="text-white font-bold mb-4 text-xs tracking-wider uppercase">
+          <h3 className="text-[#2C221E] font-bold mb-4 text-xs tracking-wider uppercase">
             開發者中心
           </h3>
           <ul className="space-y-2 text-xs">
@@ -83,7 +83,7 @@ export default function Footer() {
               <li key={link.label}>
                 <a
                   href={link.href}
-                  className="hover:text-cyan-400 transition-colors duration-200"
+                  className="hover:text-[#8B5E3C] transition-colors duration-200"
                 >
                   {link.label}
                 </a>
@@ -94,25 +94,25 @@ export default function Footer() {
 
         {/* Contact Info */}
         <div className="space-y-3 text-xs">
-          <h3 className="text-white font-bold text-xs tracking-wider uppercase">
+          <h3 className="text-[#2C221E] font-bold text-xs tracking-wider uppercase">
             技術支援與聯絡
           </h3>
           <p className="flex items-center gap-2">
-            <span className="text-cyan-400 font-semibold">合作專線:</span> (02) 2720-8889
+            <span className="text-[#8B5E3C] font-extrabold">合作專線:</span> (02) 2720-8889
           </p>
           <p className="flex items-center gap-2">
-            <span className="text-cyan-400 font-semibold">支援信箱:</span> dev-support@yujian.io
+            <span className="text-[#8B5E3C] font-extrabold">支援信箱:</span> dev-support@yujian.io
           </p>
           <p className="flex items-center gap-2">
-            <span className="text-cyan-400 font-semibold">總部地址:</span> 台北市信義區信義路五段 7 號 (台北 101 大樓 88 樓)
+            <span className="text-[#8B5E3C] font-extrabold">總部地址:</span> 台北市信義區信義路五段 7 號 (台北 101 大樓 88 樓)
           </p>
-          <p className="text-gray-500 pt-1 leading-normal">
+          <p className="text-[#8A7A72] pt-1 leading-normal">
             服務時間: 週一至週五 09:00 - 18:00 (例假日及國定假日除外)
           </p>
         </div>
       </div>
 
-      <div className="border-t border-gray-900 py-6 text-center text-[10px] text-gray-500">
+      <div className="border-t border-[#EBE5DC] py-6 text-center text-[10px] text-[#8A7A72]">
         <p>
           &copy; {new Date().getFullYear()} 漁見科技 Yujian Digital Tech. All rights reserved.
         </p>
