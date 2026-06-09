@@ -302,8 +302,19 @@ export default function AppStoreDashboard({ initialProducts }: AppStoreDashboard
           const ratingB = parseFloat(b.meta_data?.find((m) => m.key === "_app_rating")?.value || "0");
           return ratingB - ratingA;
         }
-        const downA = parseFloat(a.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
-        const downB = parseFloat(b.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
+        const parseDownloads = (val: string) => {
+          if (!val) return 0;
+          const cleanVal = val.toLowerCase().trim();
+          if (cleanVal.endsWith("k")) {
+            return parseFloat(cleanVal.slice(0, -1)) * 1000;
+          }
+          if (cleanVal.endsWith("m")) {
+            return parseFloat(cleanVal.slice(0, -1)) * 1000000;
+          }
+          return parseFloat(cleanVal) || 0;
+        };
+        const downA = parseDownloads(a.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
+        const downB = parseDownloads(b.meta_data?.find((m) => m.key === "_app_downloads")?.value || "0");
         return downB - downA;
       });
   }, [products, searchQuery, selectedCategory, sortBy]);
