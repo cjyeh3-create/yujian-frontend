@@ -20,7 +20,7 @@ const mockApps: WooCommerceProduct[] = [
     meta_data: [
       { key: "_app_version", value: "v1.0.0" },
       { key: "_app_rating", value: "5.0" },
-      { key: "_app_downloads", value: "NEW" },
+      { key: "_app_downloads", value: "2.7k" },
       { key: "_app_platforms", value: "Web, iOS, Android" },
       { key: "_app_route", value: "/apps/drink-order" }
     ]
