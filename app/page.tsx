@@ -163,7 +163,7 @@ const mockApps: WooCommerceProduct[] = [
       { key: "_app_rating", value: "4.8" },
       { key: "_app_downloads", value: "1.5k" },
       { key: "_app_platforms", value: "Web" },
-      { key: "_app_route", value: "https://viral-article.vercel.app" }
+      { key: "_app_route", value: "/apps/viral-article" }
     ]
   },
   {
