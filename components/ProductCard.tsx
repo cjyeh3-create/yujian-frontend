@@ -278,6 +278,8 @@ export default function ProductCard({ product, onOpenDetails, onEditClick }: Pro
             <a
               href={product.meta_data.find((m) => m.key === "_app_route")!.value}
               onClick={(e) => e.stopPropagation()}
+              target={product.meta_data.find((m) => m.key === "_app_route")!.value.startsWith("http") ? "_blank" : undefined}
+              rel={product.meta_data.find((m) => m.key === "_app_route")!.value.startsWith("http") ? "noopener noreferrer" : undefined}
               className="flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg font-bold text-xs bg-gradient-to-r from-[#8B5E3C] to-[#D9A05B] text-white hover:shadow-md hover:shadow-amber-900/10 active:scale-95 transition-all"
             >
               開啟
