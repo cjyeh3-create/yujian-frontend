@@ -108,8 +108,9 @@ export async function POST(request: Request) {
     );
   }
 
+  let reqBody: any = null;
   try {
-    const reqBody = await request.json();
+    reqBody = await request.json();
     const { action, provider, text, ...scriptParams } = reqBody;
 
     // ACTION 1: ANALYZE BENCHMARK COPYWRITING
