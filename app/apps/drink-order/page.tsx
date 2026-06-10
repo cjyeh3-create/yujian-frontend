@@ -205,8 +205,8 @@ export default function DrinkOrderPage() {
   const [formImage, setFormImage] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formSizes, setFormSizes] = useState<SizeOption[]>([]);
-  const [formSugars, setFormSugars] = useState("");
-  const [formIces, setFormIces] = useState("");
+  const [formSugars, setFormSugars] = useState<string[]>([]);
+  const [formIces, setFormIces] = useState<string[]>([]);
   const [formToppings, setFormToppings] = useState<ToppingOption[]>([]);
 
   // Local storage initialization
@@ -369,8 +369,8 @@ export default function DrinkOrderPage() {
     setFormDescription(drink.description);
     
     setFormSizes(drink.sizes || [...DEFAULT_SIZE_OPTIONS]);
-    setFormSugars((drink.sugars || DEFAULT_SUGAR_OPTIONS).join(","));
-    setFormIces((drink.ices || DEFAULT_ICE_OPTIONS).join(","));
+    setFormSugars(drink.sugars || [...DEFAULT_SUGAR_OPTIONS]);
+    setFormIces(drink.ices || [...DEFAULT_ICE_OPTIONS]);
     setFormToppings(drink.toppings || [...DEFAULT_TOPPING_OPTIONS]);
   };
 
@@ -384,8 +384,8 @@ export default function DrinkOrderPage() {
     setFormImage("https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&auto=format&fit=crop&q=80");
     setFormDescription("");
     setFormSizes([...DEFAULT_SIZE_OPTIONS]);
-    setFormSugars(DEFAULT_SUGAR_OPTIONS.join(","));
-    setFormIces(DEFAULT_ICE_OPTIONS.join(","));
+    setFormSugars([...DEFAULT_SUGAR_OPTIONS]);
+    setFormIces([...DEFAULT_ICE_OPTIONS]);
     setFormToppings([...DEFAULT_TOPPING_OPTIONS]);
   };
 
@@ -425,6 +425,32 @@ export default function DrinkOrderPage() {
     setFormToppings(updated);
   };
 
+  const handleAddSugarRow = () => {
+    setFormSugars([...formSugars, ""]);
+  };
+
+  const handleRemoveSugarRow = (index: number) => {
+    setFormSugars(formSugars.filter((_, i) => i !== index));
+  };
+
+  const handleSugarChange = (index: number, value: string) => {
+    const updated = formSugars.map((item, i) => i === index ? value : item);
+    setFormSugars(updated);
+  };
+
+  const handleAddIceRow = () => {
+    setFormIces([...formIces, ""]);
+  };
+
+  const handleRemoveIceRow = (index: number) => {
+    setFormIces(formIces.filter((_, i) => i !== index));
+  };
+
+  const handleIceChange = (index: number, value: string) => {
+    const updated = formIces.map((item, i) => i === index ? value : item);
+    setFormIces(updated);
+  };
+
   const handleSaveDrink = () => {
     if (!formName.trim()) {
       alert("請輸入商品名稱");
@@ -433,8 +459,8 @@ export default function DrinkOrderPage() {
     
     const sizeList = formSizes.filter(s => s.name.trim() !== "");
     const toppingList = formToppings.filter(t => t.name.trim() !== "");
-    const sugarList = formSugars.split(",").map(s => s.trim()).filter(s => s !== "");
-    const iceList = formIces.split(",").map(i => i.trim()).filter(i => i !== "");
+    const sugarList = formSugars.map(s => s.trim()).filter(s => s !== "");
+    const iceList = formIces.map(i => i.trim()).filter(i => i !== "");
     
     const drinkData: DrinkItem = {
       id: editingDrink ? editingDrink.id : `drink-${Date.now()}`,
@@ -699,26 +725,75 @@ export default function DrinkOrderPage() {
                         </div>
 
                         {/* Sugar & Ice Config */}
-                        <div className="grid grid-cols-2 gap-3 border-t border-dashed border-[#EBE5DC] pt-3 text-[11px]">
-                          <div className="space-y-1">
-                            <label className="font-extrabold text-[#2C221E] text-xs">🍬 甜度選項 (英文逗號區隔)</label>
-                            <input
-                              type="text"
-                              value={formSugars}
-                              onChange={(e) => setFormSugars(e.target.value)}
-                              placeholder="正常糖(100%),少糖(70%),半糖(50%)..."
-                              className="w-full bg-[#FAF6F0] border border-[#EBE5DC] p-2 rounded-lg text-[11px] focus:outline-none focus:border-[#8B5E3C]"
-                            />
+                        <div className="grid grid-cols-2 gap-4 border-t border-dashed border-[#EBE5DC] pt-3 text-[11px]">
+                          {/* Sugar Config */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <label className="font-extrabold text-[#2C221E] text-xs">🍬 甜度選項設定</label>
+                              <button
+                                onClick={handleAddSugarRow}
+                                className="text-[#8B5E3C] hover:text-[#724C30] font-bold text-[10px]"
+                              >
+                                + 新增甜度
+                              </button>
+                            </div>
+                            <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
+                              {formSugars.map((sg, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <input
+                                    type="text"
+                                    placeholder="例如: 半糖(50%)"
+                                    value={sg}
+                                    onChange={(e) => handleSugarChange(idx, e.target.value)}
+                                    className="flex-grow bg-[#FAF6F0] border border-[#EBE5DC] p-1.5 rounded-lg text-[11px] focus:outline-none focus:border-[#8B5E3C]"
+                                  />
+                                  <button
+                                    onClick={() => handleRemoveSugarRow(idx)}
+                                    className="text-rose-500 hover:text-rose-600 p-1"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              ))}
+                              {formSugars.length === 0 && (
+                                <div className="text-center py-2 text-[#8A7A72] text-[10px]">無自訂甜度，將套用預設</div>
+                              )}
+                            </div>
                           </div>
-                          <div className="space-y-1">
-                            <label className="font-extrabold text-[#2C221E] text-xs">❄️ 冰量選項 (英文逗號區隔)</label>
-                            <input
-                              type="text"
-                              value={formIces}
-                              onChange={(e) => setFormIces(e.target.value)}
-                              placeholder="正常冰,少冰,微冰,去冰,熱"
-                              className="w-full bg-[#FAF6F0] border border-[#EBE5DC] p-2 rounded-lg text-[11px] focus:outline-none focus:border-[#8B5E3C]"
-                            />
+
+                          {/* Ice Config */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <label className="font-extrabold text-[#2C221E] text-xs">❄️ 冰量選項設定</label>
+                              <button
+                                onClick={handleAddIceRow}
+                                className="text-[#8B5E3C] hover:text-[#724C30] font-bold text-[10px]"
+                              >
+                                + 新增冰量
+                              </button>
+                            </div>
+                            <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
+                              {formIces.map((ic, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <input
+                                    type="text"
+                                    placeholder="例如: 微冰"
+                                    value={ic}
+                                    onChange={(e) => handleIceChange(idx, e.target.value)}
+                                    className="flex-grow bg-[#FAF6F0] border border-[#EBE5DC] p-1.5 rounded-lg text-[11px] focus:outline-none focus:border-[#8B5E3C]"
+                                  />
+                                  <button
+                                    onClick={() => handleRemoveIceRow(idx)}
+                                    className="text-rose-500 hover:text-rose-600 p-1"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              ))}
+                              {formIces.length === 0 && (
+                                <div className="text-center py-2 text-[#8A7A72] text-[10px]">無自訂冰量，將套用預設</div>
+                              )}
+                            </div>
                           </div>
                         </div>
 
