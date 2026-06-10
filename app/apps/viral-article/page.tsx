@@ -31,7 +31,7 @@ import {
 import { DeconstructionResult, TopicData } from './types';
 import { INITIAL_DEFAULT_COPY, PRESETS_BY_THEME } from './presets';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL as string) || '';
+const API_BASE_URL = '';
 
 export default function ViralArticlePage() {
   // --- Core States ---
